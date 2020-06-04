@@ -4,6 +4,7 @@
 import os,sys,tty,termios
 from datetime import datetime
 from rpi.inputs import *
+from rpi.camerainfo import *
 
 ESC=27
 ENTER=13
@@ -33,6 +34,9 @@ def getch():
 
 print("Raspberry Pi capture pictures")
 print("")
+if camera_detected==0:
+    print("Raspberry Pi camera module not found!")
+    exit(0)
 
 quality_default=90
 quality=inputValue("image quality",1,100,quality_default,"","Value out of range!",True)
@@ -66,19 +70,19 @@ if awb_on=="n":
     awbg_red=inputValue("red gain",1.0,8.0,awbg_red,"","Value out of range!",False)
     awbg_blue=inputValue("blue gain",1.0,8.0,awbg_blue,"","Value out of range!",False)
 
-# Start frame
-frame_min=1
-frame_max=1000001
-frame_default=1
-print("")
-framenumber=inputValue("first frame",frame_min,frame_max,frame_default,"","Frame number is out of range!")
-
 # Digits
 min_digits=len(str(framenumber))
 max_digits=8
 if min_digits>digits_default:
   digits_default=min_digits
+print("")
 digits=inputValue("digits",min_digits,max_digits,digits_default,"","Digits is out of range!",True)
+
+# Start frame
+frame_min=1
+frame_max=10**digits-1
+frame_default=1
+framenumber=inputValue("first frame",frame_min,frame_max,frame_default,"","Frame number is out of range!")
 
 # Create a log file
 logname=""
@@ -110,8 +114,11 @@ except IOError:
 print("")
 quick_preview=inputYesNo("quick preview","Quick preview mode","y")
 
-file.write("Artist: "+artist+"\n")    
+if artist!="":
+    file.write("Artist: "+artist+"\n")    
 file.write("Capture pictures parameters:\n")
+file.write("Resolution: "+str(camera_maxx)+"x"+str(camera_maxy)+"\n")
+file.write("Sensor: "+camera_revision+"\n")
 file.write("Quality: "+str(quality)+"\n")
 file.write("ISO value: "+str(iso)+"\n")
 file.write("Exposure: "+str(exposure)+" µs\n")
@@ -122,8 +129,8 @@ else:
     file.write("Disabled\n")
     file.write("Red gain:  "+str(awbg_red)+"\n")
     file.write("Blue gain: "+str(awbg_blue)+"\n")
-file.write("Start frame: "+str(framenumber)+"\n")
 file.write("Digits: "+str(digits)+"\n")
+file.write("Start frame: "+str(framenumber)+"\n")
 file.write("First file name: "+name+"_"+str(framenumber).rjust(digits,'0')+".png\n\n")
 
 print("\nStart capturing images: ENTER")

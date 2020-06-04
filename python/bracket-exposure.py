@@ -3,8 +3,13 @@
 import os
 from datetime import datetime
 from rpi.inputs import *
+from rpi.camerainfo import *
 
 print("Exposure bracketing program for Raspberry Pi camera v. 2.x (c) Kim Miikki 2020\n")
+if camera_detected==0:
+    print("Raspberry Pi camera module not found!")
+    exit(0)
+
 quality_default=90
 artist=""
 artistfile="artist.txt"
@@ -52,6 +57,8 @@ if (path!=""):
 else:
     file.write("File path: Not defined\n\n")
 file.write("Exposure bracketing parameters:\n")
+file.write("Resolution: "+str(camera_maxx)+"x"+str(camera_maxy)+"\n")
+file.write("Sensor: "+camera_revision+"\n")
 file.write("Quality: "+str(quality)+"\n")
 file.write("ISO value: "+str(iso)+"\n\n")
 file.write("Shoot commands:\n\n")

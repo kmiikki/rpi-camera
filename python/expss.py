@@ -2,18 +2,23 @@
 # (C) Kim Miikki 2020
 
 from time import sleep
-from picamera import PiCamera
+from rpi.camerainfo import *
+
+if camera_detected==0:
+    print("Raspberry Pi camera module not found!")
+    exit(0)
 
 enable_gains=False
 preview_mode="off"
 iso=100
-w=3280
-h=2464
+w=camera_maxx
+h=camera_maxy
 
 info="Auto exposure shutter speed "
 if enable_gains:
     info+="and AWB gains "
-info+="for Raspberry Pi camera 2.x"
+info+="for Raspberry Pi camera module "
+info+=camera_revision
 print(info)
 print("")
 
@@ -29,6 +34,9 @@ camera.shutter_speed=0
 sleep(2)
 camera.awb_mode = "auto"
 ss=camera.exposure_speed
+if preview_mode=="on":
+    sleep(5)
+    camera.stop_preview()
 l=len(str(ss))
 print("Shutter speed: "+str(round(ss/1000)).rjust(l)+" ms")
 print("Shutter speed: "+str(ss)+" µs")
@@ -39,7 +47,4 @@ if enable_gains:
     print("Red gain: ",round(float(g[0]),2),g[0])
     print("Blue gain:",round(float(g[1]),2),g[1])
 
-if preview_mode=="on":
-    sleep(5)
-    camera.stop_preview()
 camera.close()

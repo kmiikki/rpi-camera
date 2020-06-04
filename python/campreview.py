@@ -4,10 +4,11 @@
 import tkinter # python version < 3: Tkinter
 from picamera import PiCamera
 import sys,tty,termios
+from rpi.camerainfo import *
 
 ESC=27
 ENTER=13
-maxx_tested=1615
+maxx_tested=1600
 maxy_tested=1200
 
 fd = sys.stdin.fileno()
@@ -20,7 +21,12 @@ def getch():
     termios.tcsetattr(fd,termios.TCSADRAIN,old_settings)
   return ch
 
-print("Raspberry Pi camera module live preview")
+print("Raspberry Pi camera module ("+camera_revision+") live preview")
+print("")
+if camera_detected==0:
+    print("Raspberry Pi camera module not found!")
+    exit(0)
+
 root=tkinter.Tk()
 w=root.winfo_screenwidth()
 h=root.winfo_screenheight()
@@ -37,14 +43,13 @@ if (w>maxx_tested) or (h>maxy_tested):
       if not (ch=="Y" or ch=="N" or ch==chr(ENTER)):
         continue
       if ch=="Y":
-        print(ch)
         break
       if ch=="N":
         print(ch)
       if ch==chr(ENTER):
         print("Default selected")
       w=maxx_tested
-      y=maxy_tested
+      h=maxy_tested
       break
 
 print("Preview:      ENTER")
@@ -56,7 +61,7 @@ while True:
   if ch==chr(ESC):
     sys.exit()
 
-camera=PiCamera(resolution=(3280,2464))
+camera=PiCamera(resolution=(camera_maxx,camera_maxy))
 camera.start_preview(resolution=(w,h))
 while True:
   if getch() == chr(ESC):

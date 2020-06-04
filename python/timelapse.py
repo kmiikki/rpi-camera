@@ -3,12 +3,16 @@
 import os
 from datetime import datetime
 from rpi.inputs import *
+from rpi.camerainfo import *
 
 # Calibration gains for Manfrotto Lumie LEDs
 awbg_red=1.6
 awbg_blue=1.4
 
-print("Time-lapse program for Raspberry Pi camera v. 2.x (c) Kim Miikki 2020\n")
+print("Time-lapse program for Raspberry Pi camera module (c) Kim Miikki 2020\n")
+if camera_detected==0:
+    print("Raspberry Pi camera module not found!")
+    exit(0)
 
 print("List disk and partitions:")
 os.system('lsblk')
@@ -159,6 +163,8 @@ else:
 file.write("Time-lapse parameters:\n")
 if artist!="":
   file.write("Artist: "+artist+"\n")
+file.write("Resolution: "+str(camera_maxx)+"x"+str(camera_maxy)+"\n")
+file.write("Sensor: "+camera_revision+"\n")
 file.write("Quality: "+str(quality)+"\n")
 file.write("ISO value: "+str(iso)+"\n")
 file.write("Exposure: "+str(exposure)+"\n")

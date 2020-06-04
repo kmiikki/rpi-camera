@@ -3,6 +3,7 @@
 import os
 from datetime import datetime
 from rpi.inputs import *
+from rpi.camerainfo import *
 
 # Calibration gains for Manfrotto Lumiemuse LEDs
 awbg_red=1.6
@@ -11,8 +12,14 @@ default_awb="y"
 awb_on="y"
 analog_gain=1.0
 analog_gain_default=1.0
+FPSref=25
 
-print("FPS video program for Raspberry Pi camera v. 2.x (c) Kim Miikki 2020\n")
+print("FPS video program for Raspberry Pi camera module ("+camera_revision+") (c) Kim Miikki 2020")
+print("")
+
+if camera_detected==0:
+    print("Raspberry Pi camera module not found!")
+    exit(0)
 
 print("List disk and partitions:")
 os.system('lsblk')
@@ -53,24 +60,25 @@ duration=1
 
 # Select video mode & FPS from a table
 mode=0 # Automatic selection (we are not going to use this)
-videomodes=[
-    [1,"1920x1080","16:9 Partial FOV  ",30],
-    [2,"1920x1080","4:3  Full FOV     ",15],
-    [3,"1920x1080","4:3  Full FOV     ",15],
-    [4,"1640x1232","4:3  Full FOV     ",40],
-    [5,"1640x922","16:9 Full FOV     ",40],
-    [6,"1280x720","16:9 Partial FOV  ",90],
-    [7,"640x480","4:3  Partial FOV  ",200],
-    [8,"640x480","4:3  Partial FOV  ",180]
-]
-
 fps=0
 while True:
     try:
+        modes=0
         print("\nVideo modes")
-        for a,b,c,d in videomodes:
-            print(a,"\t",b,"\t",c,"\t",d)
-        tmp=input("Select video mode (1...8): ")        
+        if camera_revision=="imx219":
+            print("Md Resolution A/R  FOV        FPS")
+        elif camera_revision=="imx477":
+            print("Md Resolution A/R    FOV      FPS")
+        for md,description,ar,fov,x0,y0,roi_w,roi_h,fps_min,fps_max in videomodes:
+            s=str(md)+" "+description+"  "+ar+" "
+            if fov==1:
+                s+="Full   "
+            else:
+                s+="Partial"
+            s+=" "+str(fps_min).rjust(6)+" ... "+str(fps_max)
+            modes+=1
+            print(s)
+        tmp=input("Select video mode (1..."+str(modes)+"): ")        
         mode=int(tmp)
     except ValueError:
         print("Not a valid number!")
@@ -80,20 +88,14 @@ while True:
             print("Invalid mode!\n")
             continue
         break
-fps=videomodes[mode-1][3]
+fps_min=videomodes[mode-1][8]
+fps=videomodes[mode-1][9]
 
-# Select different FPS: FPS_MIN...FPS (default fps)
-fps_new=fps
-fps_min=1
-if videomodes[mode-1][0]>=6:
-    fps_min=40
-
-fps=inputValue("FPS",fps_min,fps,fps,"","FPS is out of range!",True)
-frameexp=int(1000000/fps)
-
+fps=inputValue("FPS",fps_min,fps,fps,"","FPS is out of range!",False)
 # Exposure unit: µs
-# Exposure time must be <= 1 frame / x frame/s = 1 /x s
-# Maximum exposure is 330000 µs
+frameexp=int(1000000/fps)
+if frameexp>camera_max_exposure:
+    frameexp=camera_max_exposure
 exposure=inputValue("exposure",1,frameexp,frameexp,"µs","Exposure is out of range!",True)
 
 # Gain value: 1.0 to 12.0 for the IMX219 sensor on Camera Module V2
@@ -112,7 +114,6 @@ if awb_on=="n":
 print("")
 analog_gain=inputValue("analog gain",0.0,12.0,analog_gain_default,"","Analog gain is out of range!",False)
 
-# int64_t lasttime
 # max int64 = 9223372036854775807 
 # Video maximum duration 1 y = 31536000000 ms
 # Duration unit: ms
@@ -196,15 +197,13 @@ while True:
 # Create mode and resolution strings
 mode_str="-md "
 md_str=""
-if (mode<8):
-    mode_str+=str(mode)
-    md_str=str(mode)
-else:
-    mode_str+=str(mode-1)
-    md_str=str(mode-1)
+
+mode_str+=str(mode)
+md_str=str(mode)
+
 tmp=videomodes[mode-1][1]
-w_str=tmp.split('x')[0]
-h_str=tmp.split('x')[1]
+w_str=tmp.split('x')[0].strip()
+h_str=tmp.split('x')[1].strip()
 res_str=tmp
 resolution_str="-w "+w_str+" -h "+h_str
 
@@ -235,7 +234,7 @@ if awb_on=="n":
 # name-640x480_200fps_5000ss_20s.pts
 # name-640x480_200fps_5000ss_20s.log
 # name-640x480_200fps_5000ss_20s.rec <- raspivid terminal output
-params_str=videomodes[mode-1][1]+"_"+str(fps)+"fps_"+str(exposure)+"ss_"+str(int(duration/1000))+"s"
+params_str=videomodes[mode-1][1].strip()+"_"+str(fps)+"fps_"+str(exposure)+"ss_"+str(int(duration/1000))+"s"
 h264_name=name+"-"+params_str+".h264"
 pts_name=name+"-"+params_str+".pts"
 log_name=name+"-"+params_str+".log"
@@ -282,14 +281,6 @@ tmp+="2>&1 | tee "+rec_name
 
 shootcommand=tmp
 
-# Convert to MKV file
-# Template: mkvmerge -o file.mkv file.h264
-# => mkvmerge -o mkv_name h264_name
-mkv_command=""
-if (mkv=="y"):
-    mkv_command="mkvmerge -o "+mkv_name+" "+h264_name+" "
-    mkv_command+="2>&1 | tee -a "+rec_name
-
 # Create a log file
 now = datetime.now()
 dt_string = now.strftime("%Y.%m.%d-%H:%M:%S")
@@ -306,10 +297,14 @@ file.write("PTS:   "+pts_name+"\n")
 file.write("Log:   "+log_name+"\n")
 file.write("REC:   "+rec_name+"\n\n")
 file.write("FPS video parameters:\n")
+file.write("Resolution: "+w_str+"x"+h_str+"\n")
+file.write("Sensor: "+camera_revision+"\n")
 file.write("Sensor mode: "+md_str+"\n")
-file.write("Resolution: "+res_str+"\n")
+#file.write("Resolution: "+res_str+"\n")
 file.write("Exposure: "+str(exposure)+" µs\n")
 file.write("FPS: "+str(fps)+"\n")
+file.write("FPS reference: "+str(FPSref)+"\n")
+file.write("Slowdown factor: "+str(fps/FPSref)+"\n")
 file.write("Analog gain: "+str(analog_gain)+"\n")
 if (awb_on=="y"):
     file.write("AWB: Auto\n")
@@ -324,14 +319,28 @@ else:
     file.write("Preview: off\n\n")
 file.write("Record video:\n\n")
 file.write(shootcommand+"\n")
-if (mkv=="y"):
-    file.write("\n"+mkv_command+"\n")
-file.close()
 
-print ("\n"+shootcommand+"\n")
-print (mkv_command+"\n")
+print("\n"+shootcommand)
 
 if (recordnow=="y"):
     os.system(shootcommand)
     if (mkv=="y"):
+        # Convert to MKV file
+        # Template: mkvmerge -o file.mkv file.h264
+        # => mkvmerge -o mkv_name h264_name
+        mkv_command=""
+        frames=0
+        # Count frames
+        for line in open(pts_name):
+            frames+=1
+        frames-=1
+        # tf = calculated time for one frame
+        tf=fps/FPSref*duration/frames
+        frame_time="--default-duration 0:"+str(tf)+"ms"
+        mkv_command="mkvmerge "+frame_time+" -o "+mkv_name+" "+h264_name+" "
+        mkv_command+="2>&1 | tee -a "+rec_name
+        file.write("\n"+mkv_command+"\n")
+        print(mkv_command+"\n")
         os.system(mkv_command)
+
+file.close()

@@ -2,19 +2,19 @@
 # Calibrate Raspberry Pi camera v. 2.x fast (c) Kim Miikki and Alp Karakoc 2020
 import os
 import time
-from picamera import PiCamera
 from datetime import datetime
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 from rpi.inputs import *
+from rpi.camerainfo import *
 
 expss=0
 red_gain_min=1.0
-red_gain_max=2.0
+red_gain_max=4.0
 blue_gain_min=1.0
-blue_gain_max=2.0
+blue_gain_max=4.0
 red_step=0.1
 blue_step=0.1
 
@@ -157,14 +157,22 @@ def distancesort(sub_li):
     # sublist lambda has been used 
     return(sorted(sub_li, key = lambda x: x[2]))  
 
-print("Calibrate Raspberry Pi camera v. 2.x fast (c) Kim Miikki and Alp Karakoc 2020\n")
+print("Calibrate Raspberry Pi camera module ("+camera_revision+")")
+print("(c) Kim Miikki and Alp Karakoc 2020\n")
 quality_default=90
 artist=""
 artistfile="artist.txt"
 
 np.set_printoptions(suppress=True)
 
-analyzeOnly=inputYesNo("Analyze only mode","Calibration from existing files","N")
+if camera_detected==1:
+    analyzeOnly=inputYesNo("Analyze only mode","Calibration from existing files","N")
+else:
+    print("Raspberry Pi camera module not found!")  
+    analyzeOnly=inputYesNo("Analyze only mode","Calibration from existing files","Y")
+    if analyzeOnly=="n":
+        print("Calibration of existing files is only allowed without a camera module. Program is terminated.")
+        exit(0)
 if analyzeOnly=="n":
     quality=inputValue("quality",1,100,quality_default,"","Quality is out of range!",True)
 else:
@@ -184,8 +192,8 @@ iso_default=100
 iso_modes=[100,200,320,400,500,640,800]
 if analyzeOnly=="n":
     iso=inputListValue("ISO",iso_modes,iso_default,"Not a valid ISO value!")
-    w=3280
-    h=2464
+    w=camera_maxx
+    h=camera_maxy
     camera=PiCamera(resolution=(w,h))
     camera.iso=int(iso)
     # You can query the exposure_speed attribute to determine the actual
@@ -350,6 +358,9 @@ file.write("Calibration name: "+name+"\n\n")
 
 if analyzeOnly=="n":
     file.write("Calibration parameters:\n")
+    if camera_detected==1:
+        file.write("Resolution: "+str(camera_maxx)+"x"+str(camera_maxy)+"\n")
+        file.write("Sensor: "+camera_revision+"\n")
     file.write("Red gain:   "+str(red_gain_min)+"-"+str(red_gain_max)+"\n")
     file.write("Blue gain:  "+str(blue_gain_min)+"-"+str(blue_gain_max)+"\n")
     file.write("Red gain step:  "+str(red_step)+"\n")
@@ -363,7 +374,7 @@ if analyzeOnly=="n":
     file.write("Exposure mode  : "+str(mode)+"\n")
     file.write("Exposures (µs) : "+str(exposure)+"\n")
     file.write("Pictures/series: "+str(exposures)+"\n")
-    file.write("X range: "+str(exposure[0])+"-"+str(exposure[len(exposure)-1])+" µs"+"\n")
+    file.write("Exposure range : "+str(exposure[0])+"-"+str(exposure[len(exposure)-1])+" µs"+"\n")
 
 file.write("Scale type: "+scale_type+"\n")
 file.write("Analyze only mode: ")
@@ -603,7 +614,6 @@ if count>0:
     defsettotaldist = [defsetdistsample[x][0][1],defsetdistsample[x][0][2], \
                        totaldist]
     dft.append(defsettotaldist)
-      
   optimal = distancesort(dft)[0]
   print("")
   print("Optimal r_gain = ", optimal[0])

@@ -2,16 +2,22 @@
 # (C) Kim Miikki 2020
 
 from time import sleep
-from picamera import PiCamera
+from rpi.camerainfo import *
+
+if camera_detected==0:
+    print("Raspberry Pi camera module not found!")
+    exit(0)
 
 exposure=20000   
 exp_mode_manual="off"
 preview_mode="off"
 iso=100
-w=3280
-h=2464
+w=camera_maxx
+h=camera_maxy
 
-print("Auto white balance gains for Raspberry Pi camera 2.x")
+info="Auto white balance gains for Raspberry Pi camera module "
+info+=camera_revision
+print(info)
 print("")
 
 camera=PiCamera(resolution=(w,h))
@@ -24,6 +30,9 @@ if exp_mode_manual=="on":
 camera.iso=int(iso)
 # Wait for the automatic gain control to settle
 sleep(2)
+if preview_mode=="on":
+    sleep(5)
+    camera.stop_preview()
 camera.awb_mode = "auto"
 g = camera.awb_gains
 print("Red gain: ",round(float(g[0]),2),g[0])
@@ -33,7 +42,4 @@ print("Blue gain:",round(float(g[1]),2),g[1])
 # Red gain:  1.85 237/128
 # Blue gain: 1.51 387/256
 
-if preview_mode=="on":
-    sleep(5)
-    camera.stop_preview()
 camera.close()
