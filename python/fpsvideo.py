@@ -5,9 +5,11 @@ from datetime import datetime
 from rpi.inputs import *
 from rpi.camerainfo import *
 
+# Uncomment to overide red and blue gains
 # Calibration gains for Manfrotto Lumiemuse LEDs
-awbg_red=1.6
-awbg_blue=1.4
+#awbg_red=1.6
+#awbg_blue=1.4
+
 default_awb="y"
 awb_on="y"
 analog_gain=1.0

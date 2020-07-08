@@ -67,35 +67,64 @@ file.write("Shoot commands:\n\n")
 exposure=list()
 filenames=list()
 shootcommand=list()
-exposure = [
-    1,
-    5,
-    10,
-    25,
-    50,
-    100,
-    200,
-    350,
-    500,
-    750,
-    1000,
-    2000,
-    3500,
-    5000,
-    7500,
-    10000,
-    15000,
-    20000,
-    35000,
-    50000,
-    100000,
-    150000,
-    200000,
-    250000,
-    300000,
-    330000
-]
-
+digits=0
+if camera_revision=="imx219":
+    digits=6
+    exposure = [
+        1,
+        5,
+        10,
+        25,
+        50,
+        100,
+        200,
+        350,
+        500,
+        750,
+        1000,
+        2000,
+        3500,
+        5000,
+        7500,
+        10000,
+        15000,
+        20000,
+        35000,
+        50000,
+        100000,
+        150000,
+        200000,
+        250000,
+        300000,
+        330000
+    ]
+elif camera_revision=="imx477":
+    digits=7
+    exposure = [
+        250,
+        350,
+        500,
+        750,
+        1000,
+        2000,
+        3500,
+        5000,
+        7500,
+        10000,
+        15000,
+        20000,
+        35000,
+        50000,
+        100000,
+        150000,
+        200000,
+        250000,
+        300000,
+        350000,
+        500000,
+        750000,
+        1000000
+    ]
 # Genereate file names and shoot commands
 # Template:
 #
@@ -106,7 +135,7 @@ exposure = [
 i=0
 for time in exposure:
     timestr=str(exposure[i])
-    timestr=timestr.rjust(6,'0')
+    timestr=timestr.rjust(digits,'0')
 
     fname=name+"_iso"+str(iso)+"_"+timestr+".jpg"
     filenames.append(fname)

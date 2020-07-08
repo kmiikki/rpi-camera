@@ -26,7 +26,7 @@ elif arguments>2:
 
 filename=sys.argv[1]
 file = open(filename, "r") 
-sampling = 6
+sampling = 1
 
 lines = file.readlines()
 count = len(lines)
@@ -60,11 +60,27 @@ else:
   print("Calibration images: "+str(count))
 
 if count>0:
-    count = int(count/sampling)
-    defsetdistsample =  partition(dfs,count)
+    #count = int(count/sampling)
+    #defsetdistsample =  partition(dfs,count)
+    exposuretime=int(lines[1].split(";")[1])
+
+    dfsflatten = list()
+
+    for i in range(len(dfs)): #Traversing through the main list
+      for j in range (len(dfs[i])): #Traversing through each sublist
+        dfsflatten.append(dfs[i][j]) #Appending elements into our flat_list
+      
+    #Sampling is the number of exposures used for each r_ and b_gains
+    samplinglists = dfsflatten.count(exposuretime)
+    #print("Sampling = ", samplinglists)
+    #sampling = int((count-1) / samplinglists)
+
+    #Partitioning of the total list into exposure sampling sets
+    #count = int((count-1)/sampling)
+    defsetdistsample =  partition(dfs,samplinglists)  
     
     dft = list()
-    for x in range(0,count):
+    for x in range(0,samplinglists):
         dists = distanceextract(defsetdistsample[x])
         totaldist = sum(dists)
         defsettotaldist = [defsetdistsample[x][0][1],defsetdistsample[x][0][2], \

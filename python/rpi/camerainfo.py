@@ -22,6 +22,13 @@ camera_maxy=0
 camera_max_exposure=int(6e6) # Default maximum shutter speed, OV5647
 videomodes=[]
 
+red_gain_min=1.0
+red_gain_max=4.0
+blue_gain_min=1.0
+blue_gain_max=4.0
+awbg_red=1.0
+awbg_blue=1.0
+
 # Detect if a camera module is present
 tmp=subprocess.check_output("vcgencmd get_camera",shell=True)
 tmp=tmp[:-1]
@@ -66,6 +73,12 @@ if camera_revision=="imx219":
 		[6,"  1280x720","16:9",0,360,512,2560,1440,40,90],
 		[7,"   640x480"," 4:3",0,1000,752,1280,960,40,200]
 	]
+	red_gain_min=1.0
+	red_gain_max=2.0
+	blue_gain_min=1.0
+	blue_gain_max=2.0
+	awbg_red=1.6
+	awbg_blue=1.4
 elif camera_revision=="imx477":
 	# MD, Description, A/R, FOV (0 = Partial and 1 = Full)
 	# video x, video y, FOV w, FOW h, FPS min, FPS max
@@ -80,4 +93,9 @@ elif camera_revision=="imx477":
 		[3," 1600x1200","   4:3",1,0,0,4056,3040,0.005,10],
 		[4,"  1012x760","   4:3",1,0,0,4056,3040,50.1,120],
 	]
-
+	red_gain_min=3.0
+	red_gain_max=4.0
+	blue_gain_min=1.0
+	blue_gain_max=2.0
+	awbg_red=3.16
+	awbg_blue=1.24

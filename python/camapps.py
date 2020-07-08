@@ -27,21 +27,22 @@ menu = [
   [1,3,"Video preview","vidpreview.py"],
   [2,4,"Auto exposure shutter speed","expss.py"],
   [2,5,"Exposure bracketing","bracket-exposure.py"],
-  [3,6,"Auto white balance (AWB) gains","awb_gains.py"],
-  [3,7,"Optimal gains from a calibration file","optimum_gains.py"],
-  [3,8,"Calibration","calibratecam.py"],
-  [4,9,"Camera","capturepics-preview.py"],
-  [4,10,"Camera without preview","capturepics.py"],
-  [4,11,"Time-lapse","timelapse.py"],
-  [4,12,"Video recorder","fpsvideo.py"],
-  [5,13,"Create videos from images","gtlvideo.py"],
-  [5,14,"Color analysis","rgbinfo.py"],
-  [5,15,"Split images to RGB channels","rgbsplit"],
-  [5,16,"Combine RGB channels to color images","rgbcombine.py"],
-  [5,17,"Split RGB channels to gray scale","bw-rgbsplit.py"],
-  [5,18,"Combine RGB gray scale channels to color images","bw-rgbcombine.py"],
-  [5,19,"Convert images to PNG format","pics2png.py"],
-  [5,20,"Images to time-lapse files","gen_tlfiles.py"]
+  [2,6,"Detect minimum exposure time","dminexp.py"],
+  [3,7,"Auto white balance (AWB) gains","awb_gains.py"],
+  [3,8,"Optimal gains from a calibration file","optimum_gains.py"],
+  [3,9,"Calibration","calibratecam.py"],
+  [4,10,"Camera","capturepics-preview.py"],
+  [4,11,"Camera without preview","capturepics.py"],
+  [4,12,"Time-lapse","timelapse.py"],
+  [4,13,"Video recorder","fpsvideo.py"],
+  [5,14,"Create videos from images","gtlvideo.py"],
+  [5,15,"Color analysis","rgbinfo.py"],
+  [5,16,"Split images to RGB channels","rgbsplit.py"],
+  [5,17,"Combine RGB channels to color images","rgbcombine.py"],
+  [5,18,"Split RGB channels to gray scale","bw-rgbsplit.py"],
+  [5,19,"Combine RGB gray scale channels to color images","bw-rgbcombine.py"],
+  [5,20,"Convert images to PNG format","pics2png.py"],
+  [5,21,"Images to time-lapse files","gen_tlfiles.py"]
  ]
 
 exitProgram=False
@@ -63,7 +64,7 @@ while not exitProgram:
     if selection>0:
         arg=""
         pname=menu[selection-1][3]
-        if selection==6:
+        if selection==8:
             arg=input("Enter RGB calibration file name: ")
             pname+=" "
             pname+=arg

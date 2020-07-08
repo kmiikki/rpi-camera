@@ -5,9 +5,10 @@ from datetime import datetime
 from rpi.inputs import *
 from rpi.camerainfo import *
 
+# Uncomment to overide red and blue gains
 # Calibration gains for Manfrotto Lumie LEDs
-awbg_red=1.6
-awbg_blue=1.4
+#awbg_red=1.6
+#awbg_blue=1.4
 
 print("Time-lapse program for Raspberry Pi camera module (c) Kim Miikki 2020\n")
 if camera_detected==0:

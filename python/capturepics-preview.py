@@ -24,9 +24,10 @@ quality_default=90
 artist=""
 artistfile="artist.txt"
 
+# Uncomment to overide red and blue gains
 # Calibration gains for Manfrotto Lumie LEDs
-awbg_red=1.6
-awbg_blue=1.4
+#awbg_red=1.6
+#awbg_blue=1.4
 
 fd = sys.stdin.fileno()
 old_settings = termios.tcgetattr(fd)
@@ -62,7 +63,7 @@ print("")
 
 # Exposure unit: µs
 exp_min=1
-exp_max=330000
+exp_max=3300000
 exp_default=2000
 exposure=inputValue("exposure time",exp_min,exp_max,exp_default,"µs","Exposure is out of range!",True)
 

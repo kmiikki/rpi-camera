@@ -11,17 +11,26 @@ from rpi.inputs import *
 from rpi.camerainfo import *
 
 expss=0
-red_gain_min=1.0
-red_gain_max=4.0
-blue_gain_min=1.0
-blue_gain_max=4.0
+
+# Uncomment to overide gain ranges
+#red_gain_min=3.0
+#red_gain_max=4.0
+#blue_gain_min=1.0
+#blue_gain_max=2.0
+
 red_step=0.1
 blue_step=0.1
 
-roi_x0=0.0
-roi_y0=0.0
-roi_w=1.0
-roi_h=1.0
+roi_x0=0.1
+roi_y0=0
+roi_w=0.9
+roi_h=0.75
+
+# Uncomment for full field of view
+#roi_x0=0
+#roi_y0=0
+#roi_w=1
+#roi_h=1
 
 color_max=255
 r_avg=0
@@ -38,14 +47,25 @@ exposure=list()
 filenames=list()
 shootcommand=list()
 
-exp_fast = [
+exp_fast=[]
+if camera_revision=="imx219":
+  exp_fast = [
     50,
     100,
     250,
     500,
     750,
     1000
-]
+  ]
+elif camera_revision=="imx477":
+  exp_fast = [
+    250,
+    500,
+    750,
+    1000,
+    1500,
+    2000
+  ]
 
 exp_medium1 = [
     1000,
@@ -74,7 +94,9 @@ exp_slow = [
     300000
 ]
 
-exp_wide = [
+exp_wide=[]
+if camera_revision=="imx219":
+  exp_wide = [
     50,
     100,
     200,
@@ -87,9 +109,26 @@ exp_wide = [
     50000,
     100000,
     200000
-]
+  ]
+elif camera_revision=="imx477":
+  exp_wide = [
+    250,
+    500,
+    750,
+    1000,
+    2000,
+    5000,
+    10000,
+    20000,
+    25000,
+    50000,
+    100000,
+    200000
+  ]
 
-exp_full = [
+exp_full=[]
+if camera_revision=="imx219":    
+  exp_full = [
     1,
     5,
     10,
@@ -116,7 +155,31 @@ exp_full = [
     250000,
     300000,
     330000
-]
+  ]
+elif camera_revision=="imx477":
+  exp_full = [
+    250,
+    350,
+    500,
+    750,
+    1000,
+    2000,
+    3500,
+    5000,
+    7500,
+    10000,
+    15000,
+    20000,
+    35000,
+    50000,
+    100000,
+    150000,
+    200000,
+    250000,
+    300000,
+    350000,
+    500000
+  ]
 
 exp_auto=[]
 exposures=0
@@ -604,11 +667,28 @@ else:
   file.write("Calibration images: "+str(count)+"\n")
 
 if count>0:
-  count = int(count/sampling)
-  defsetdistsample =  partition(dfs,count)
+  #count = int(count/sampling)
+  #defsetdistsample =  partition(dfs,count)
+  
+  exposuretime=int(lines[1].split(";")[1])
+
+  dfsflatten = list()
+
+  for i in range(len(dfs)): #Traversing through the main list
+    for j in range (len(dfs[i])): #Traversing through each sublist
+      dfsflatten.append(dfs[i][j]) #Appending elements into our flat_list
+    
+  #Sampling is the number of exposures used for each r_ and b_gains
+  samplinglists = dfsflatten.count(exposuretime)
+  #print("Sampling = ", samplinglists)
+  #sampling = int((count-1) / samplinglists)
+
+  #Partitioning of the total list into exposure sampling sets
+  #count = int((count-1)/sampling)
+  defsetdistsample =  partition(dfs,samplinglists)  
 
   dft = list()
-  for x in range(0,count):
+  for x in range(0,samplinglists):
     dists = distanceextract(defsetdistsample[x])
     totaldist = sum(dists)
     defsettotaldist = [defsetdistsample[x][0][1],defsetdistsample[x][0][2], \
