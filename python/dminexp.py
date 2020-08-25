@@ -199,7 +199,7 @@ for i in range(exp_start,exp_end+exp_step,exp_step):
     red.append(r_avg)
     green.append(g_avg)
     blue.append(b_avg)
-    print(i,rgb_means)
+    print(i,rgb_means[::-1])
     output.truncate(0)
 red_curve,=plt.plot(exposure,red,color="#ff0000")
 green_curve,=plt.plot(exposure,green,color="#00ff00")
