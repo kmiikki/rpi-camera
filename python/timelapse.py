@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# Time-lapse program for Raspberry Pi camera v. 2.x (c) Kim Miikki 2019
+# Time-lapse program for Raspberry Pi camera v. 2.x and HQ (c) Kim Miikki 2020
 import os
 from datetime import datetime
 from rpi.inputs import *
@@ -10,19 +10,25 @@ from rpi.camerainfo import *
 #awbg_red=1.6
 #awbg_blue=1.4
 
+preview_default="y"
+
 print("Time-lapse program for Raspberry Pi camera module (c) Kim Miikki 2020\n")
 if camera_detected==0:
     print("Raspberry Pi camera module not found!")
     exit(0)
+
+if camera_revision=="imx219":
+      preview_default="n"
 
 print("List disk and partitions:")
 os.system('lsblk')
 print("\nCurrent directory:")
 os.system("pwd")
 path=input('\nPath to images (current directory: <Enter>): ')
-name=input('Time-lapse project name: ')
+name=input('Time-lapse project name (default: pic <Enter>): ')
 if name=="":
     name="pic"
+    print("Default project name selected: "+name)
 print("")
 quality_default=90
 quality=inputValue("image quality",1,100,quality_default,"","Value out of range!",True)
@@ -53,6 +59,10 @@ interval=inputValue("interval",1,86400,1,"s","Interval out of range!",True)
 # Duration unit: ms
 max_duration=31536000
 duration=inputValue("time-lapse duration",1,max_duration,30,"s","Duration is out of range!",True)
+
+# Enable or disable preview
+# Small interval values may cause loss of frames
+preview=inputYesNo("Preview","Enable preview",preview_default)
 
 # Gain value: 1.0 to 12.0 for the IMX219 sensor on Camera Module V2
 print("")
@@ -129,7 +139,8 @@ duration=duration*1000
 fname=name+"-frame%08d.jpg"
 tmp="raspistill -t "+str(duration)+" "
 tmp+="-tl "+str(interval)+" "
-tmp+="-n "
+if preview=="n":
+    tmp+="-n "
 tmp+="-ISO "+str(iso)+" "
 tmp+="-q "+str(quality)+" "
 tmp+="-ss "+str(exposure)+" "
@@ -171,6 +182,11 @@ file.write("ISO value: "+str(iso)+"\n")
 file.write("Exposure: "+str(exposure)+"\n")
 file.write("Duration: "+str(duration)+"\n")
 file.write("Interval: "+str(interval)+"\n")
+file.write("Preview: ")
+if preview=="y":
+    file.write("Enabled\n")
+else:
+    file.write("Disabled\n")
 file.write("Additional parameters: "+str(additional_params)+"\n")
 file.write("Start frame: "+str(start_frame)+"\n\n")
 file.write("Shoot command:\n\n")
