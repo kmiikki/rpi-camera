@@ -4,8 +4,9 @@ import os
 from datetime import datetime
 from rpi.inputs import *
 from rpi.camerainfo import *
+from rpi.roi import *
 
-print("Exposure bracketing program for Raspberry Pi camera v. 2.x (c) Kim Miikki 2020\n")
+print("Exposure bracketing program for Raspberry Pi camera (c) Kim Miikki 2020\n")
 if camera_detected==0:
     print("Raspberry Pi camera module not found!")
     exit(0)
@@ -41,6 +42,15 @@ try:
 except IOError:
     artist=""
 
+if len(path)>0:
+    roi_file_exists=read_roi_file(roi_filename,path)
+    
+if roi_file_exists:
+    roi_string=roi_dict["roi_x0"]+","
+    roi_string+=roi_dict["roi_y0"]+","
+    roi_string+=roi_dict["roi_w"]+","
+    roi_string+=roi_dict["roi_h"]
+
 # Create a log file
 logname=""
 if (path!=""):
@@ -58,6 +68,12 @@ else:
     file.write("File path: Not defined\n\n")
 file.write("Exposure bracketing parameters:\n")
 file.write("Resolution: "+str(camera_maxx)+"x"+str(camera_maxy)+"\n")
+file.write("ROI: ")
+if roi_file_exists:
+    file.write(roi_string+"\n")
+else:
+    file.write("FOV")
+file.write("ņ")
 file.write("Sensor: "+camera_revision+"\n")
 file.write("Quality: "+str(quality)+"\n")
 file.write("ISO value: "+str(iso)+"\n\n")
@@ -145,6 +161,8 @@ for time in exposure:
     tmp+=str(quality)+" "
     tmp+="-ss "+timestr+" "
     tmp+="-bm -drc high "
+    if roi_file_exists:
+        tmp+="-roi "+roi_string+" "
     if artist!="":
         tmp+='-x IFD0.Artist="'+artist+'" '
         tmp+='-x IFD0.Copyright="'+artist+'" '

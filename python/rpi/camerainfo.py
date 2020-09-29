@@ -10,6 +10,9 @@ sensor_megapixels_dict= {
 	"imx477": [12.3,200e6]
 }
 
+board_model=""
+board_model_ver=0
+
 camera_detected=0
 camera_revision=""
 camera_exif=""
@@ -28,6 +31,36 @@ blue_gain_min=1.0
 blue_gain_max=4.0
 awbg_red=1.0
 awbg_blue=1.0
+
+def boardModel():
+    # Template
+    # Model           : Raspberry Pi 4 Model B Rev 1.1
+    model=""
+    modelver=0
+    rpistr="Raspberry Pi "
+    try:
+        with open("/proc/cpuinfo","r") as f:
+            lines=f.readlines()
+            for l in lines:
+                if l.find("Model")==0:
+                    start=l.find(": ")
+                    if start>0:
+                        model=l[start+2:].strip()
+                        # model="Raspberry Pi 4 Model B Rev 1.1"
+                        pos_rpistr=model.find(rpistr)
+                        if pos_rpistr==0 and len(model)>0:
+                            ver_str=model[len(rpistr):]
+                            # model="4 Model B Rev 1.1"
+                            pos_space=ver_str.find(" ")
+                            if pos_space>0:
+                                ver_str=ver_str[:pos_space]
+                                # ver_str="4"
+                            modelver=int(ver_str)
+                            break
+    except:
+        model="N/A"
+    return model,modelver
+board_model,board_model_ver=boardModel()
 
 # Detect if a camera module is present
 tmp=subprocess.check_output("vcgencmd get_camera",shell=True)

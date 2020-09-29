@@ -12,10 +12,11 @@ import cv2
 import matplotlib.pyplot as plt
 from rpi.inputs import *
 from rpi.camerainfo import *
+from rpi.roi import *
 
 # Custom exposure ranges
-exp_start=1000
-exp_end=15000
+exp_start=100
+exp_end=20000
 exp_step=100
 
 # Uncomment to determine the minimum exposure time for a camera sensor
@@ -55,7 +56,7 @@ os.system("pwd")
 path=input('\nPath to images (current directory: <Enter>): ')
 name=input('Project name (default=exp: <Enter>): ')
 
-iso=100
+iso=1
 iso_default=100
 iso_modes=[100,200,320,400,500,640,800]
 iso=inputListValue("ISO",iso_modes,iso_default,"Not a valid ISO value!",False)
@@ -70,9 +71,22 @@ if awb_on=="n":
     awbg_red=inputValue("red gain",1.0,8.0,awbg_red,"","Value out of range!",False)
     awbg_blue=inputValue("blue gain",1.0,8.0,awbg_blue,"","Value out of range!",False)
 
-default_save_images="n"
+default_save_images="y"
 print("")
 save_images=inputYesNo("Save images","Save captured images",default_save_images)
+
+if len(path)>0:
+    roi_file_exists=read_roi_file(roi_filename,path)
+    
+if roi_file_exists:
+    roiX=float(roi_dict["roi_x0"])
+    roiY=float(roi_dict["roi_y0"])
+    roiW=float(roi_dict["roi_w"])
+    roiH=float(roi_dict["roi_h"])
+    roi_string=roi_dict["roi_x0"]+","
+    roi_string+=roi_dict["roi_y0"]+","
+    roi_string+=roi_dict["roi_w"]+","
+    roi_string+=roi_dict["roi_h"]
 
 # Create a log file
 logname=""
@@ -116,6 +130,8 @@ file.write("Capture pictures parameters:\n")
 file.write("Resolution: "+str(camera_maxx)+"x"+str(camera_maxy)+"\n")
 file.write("Sensor: "+camera_revision+"\n")
 file.write("ISO value: "+str(iso)+"\n")
+file.write("Image width : "+str(width)+"\n")
+file.write("Image height: "+str(height)+"\n")
 file.write("ROI x0: "+str(roiX)+"\n")
 file.write("ROI y0: "+str(roiY)+"\n")
 file.write("ROI w : "+str(roiW)+"\n")

@@ -17,7 +17,7 @@ if camera_detected==0:
     print("Raspberry Pi camera module not found!")
     exit(0)
 
-if camera_revision=="imx219":
+if board_model_ver==3:
       preview_default="n"
 
 print("List disk and partitions:")

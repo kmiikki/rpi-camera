@@ -8,7 +8,17 @@ import os,sys,tty,termios
 from datetime import datetime
 from rpi.inputs import *
 from rpi.camerainfo import *
+from rpi.roi import *
 
+roi_crop_enabled=True
+high_resolution=False
+zoom=(0,0,1,1)
+
+# Maxiumum resolution for PiCam preview
+max_width=1920
+max_height=1080
+
+TAB=9
 ESC=27
 ENTER=13
 SPACE=32
@@ -44,7 +54,7 @@ print("")
 if camera_detected==0:
     print("Raspberry Pi camera module not found!")
     exit(0)
-
+   
 quality_default=90
 quality=inputValue("image quality",1,100,quality_default,"","Quality is out of range!",True)
 
@@ -135,9 +145,24 @@ file.write("Start frame: "+str(framenumber)+"\n")
 file.write("Digits: "+str(digits)+"\n")
 file.write("First file name: "+name+"_"+str(framenumber).rjust(digits,'0')+".png\n")
 
+roi_result=validate_roi_values()
+if roi_result==True:
+    zoom=(roi_x0,roi_y0,roi_w,roi_h)
+
 root=tkinter.Tk()
 w=root.winfo_screenwidth()
 h=root.winfo_screenheight()
+if w>max_width or h>max_height:
+    print("")
+    print("Current resolution:    "+str(w)+"x"+str(h))
+    print("Max supported resolution: "+str(max_width)+"x"+str(max_height))
+    print("New preview resolution:   "+str(max_width)+"x"+str(max_height))
+    w=max_width
+    h=max_height
+    #print("Proram is terminated.")
+    #exit(0)
+
+print("")
 if (w>maxx_tested) or (h>maxy_tested):
   print("Full screen and cropped preview (Y/N, default: N <ENTER>)")
   while True:
@@ -174,8 +199,9 @@ while True:
     sys.exit()
 
 camera=PiCamera(resolution=(camera_maxx,camera_maxy))
-camera.start_preview(resolution=(w,h))
 camera.iso=int(iso)
+camera.zoom=zoom
+camera.start_preview(resolution=(w,h))
 # Wait for the automatic gain control to settle
 sleep(2)
 # Now fix the values
@@ -199,13 +225,22 @@ while framenumber<10**digits:
     if path!="":
         fname=path+"/"+fname
     fname=fname+".png"
+    old=camera.zoom
+    camera.zoom=(0,0,1,1)
     camera.capture(fname)
     file.write(fname+"\n")
     framenumber+=1
+    camera.zoom=old
     camera.start_preview()
-  if ch==chr(ESC):
+  elif ch==chr(TAB):
+    roi_crop_enabled=not roi_crop_enabled
+    if roi_crop_enabled:
+        camera.zoom=zoom
+    else:
+        camera.zoom=(0,0,1,1)
+  elif ch==chr(ESC):
     break
-  
+
 camera.stop_preview()
 camera.close()
 file.close()
