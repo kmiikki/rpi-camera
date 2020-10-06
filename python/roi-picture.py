@@ -106,8 +106,6 @@ roi_y0=roiy(crop_y0,img_y1)
 roi_h=roiy(crop_y1-crop_y0,img_y1)
 
 assign_roi_values()
-print(roi_dict)
-print(roi_x0,roi_w,roi_y0,roi_h)
 crop_result=validate_img_crop()
 if crop_result==False:
     exit(0)
@@ -133,6 +131,7 @@ with open("roi.ini","w",newline="") as csvfile:
     for s in roilist:
         csvwriter.writerow(s)
 
+print("")
 print("Roi option: -roi "+
       str(roi_x0)+","+
       str(roi_y0)+","+
