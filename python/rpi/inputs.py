@@ -41,8 +41,8 @@ def inputListValue(name,listValues=[],default=-1,listErrorText="Not a valid valu
             list_str+=", "
         else:
             list_str+="; "    
-    value=default
     while True:
+        value=default
         try:
             tmp=input("Select "+name+" ("+list_str+"Default="+str(default)+"): ")
             if strType:
@@ -68,9 +68,9 @@ def inputListValue(name,listValues=[],default=-1,listErrorText="Not a valid valu
     return value
 
 
-def inputValue(name,minValue=0,maxValue=1,default=0,unit="",rangeErrorText="Value out of range",intMode=True):
-    value=default
+def inputValue(name,minValue=0,maxValue=1,default=0,unit="",rangeErrorText="Value out of range",intMode=True):    
     while True:
+        value=default
         try:
             s="Select "+name+" ("+str(minValue)+"..."+str(maxValue)
             if not unit=="":

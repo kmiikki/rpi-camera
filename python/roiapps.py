@@ -17,7 +17,8 @@ menu = [
   [1,1,"Preview and selection","roi-select.py"],
   [1,2,"ROI from a single picture","roi-picture.py"],
   [1,3,"ROI camera preview","roi-preview.py"],
-  [1,4,"Batch crop","roi-batch.py"],
+  [1,4,"ROI manual selection","roi-manual.py"],
+  [1,5,"Batch crop","roi-batch.py"],
  ]
 
 exitProgram=False

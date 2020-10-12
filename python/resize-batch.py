@@ -58,7 +58,7 @@ def create_subdir(resize_axis="X"):
         print("")
         sys.exit(1)
 
-print("Image batch resize ytool")
+print("Image batch resize tool")
 
 # Get current directory
 curdir=os.getcwd()
