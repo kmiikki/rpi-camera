@@ -7,8 +7,10 @@ menu=list()
 
 # Categories
 # 1 Composition
+# 2 Focusing Tools
 categories=[
     "Region of Interest",
+    "Focusing Tools",
 ]
 
 # Menu format
@@ -19,6 +21,8 @@ menu = [
   [1,3,"ROI camera preview","roi-preview.py"],
   [1,4,"ROI manual selection","roi-manual.py"],
   [1,5,"Batch crop","roi-batch.py"],
+  [2,6,"Sharpness level monitor","camera-sharpness.py"],
+  [2,7,"ROI sharpness level monitor","roi-sharpness.py"],
  ]
 
 exitProgram=False

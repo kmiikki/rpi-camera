@@ -17,6 +17,7 @@ def variance_of_laplacian(image):
 	# measure, which is simply the variance of the Laplacian
 	return cv2.Laplacian(image, cv2.CV_64F).var()
 
+TAB=9
 ESC=27
 SPACE=32
 
@@ -41,7 +42,7 @@ if arguments==2:
         print("HD capture mode enabled")
         Enable_HD=True
 print("")
-print("Text color:   SPACE")
+print("Text color:   TAB")
 print("Exit program: ESC")
 
 
@@ -70,7 +71,7 @@ while True:
     key=cv2.waitKey(1)
     if key==ESC:
         break
-    elif key==SPACE:
+    elif key==TAB:
         color+=1
         if color>len(colors)-1:
             color=0
