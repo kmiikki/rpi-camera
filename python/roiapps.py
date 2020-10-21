@@ -21,8 +21,9 @@ menu = [
   [1,3,"ROI camera preview","roi-preview.py"],
   [1,4,"ROI manual selection","roi-manual.py"],
   [1,5,"Batch crop","roi-batch.py"],
-  [2,6,"Sharpness level monitor","camera-sharpness.py"],
-  [2,7,"ROI sharpness level monitor","roi-sharpness.py"],
+  [2,6,"ROI sharpness level monitor","roi-sharpness.py"],
+  [2,7,"Sharpness level monitor and camera  (server)","capture-sharpness.py"],
+  [2,8,"Client sharpness live graph monitor (client)","sharpmon.py"],
  ]
 
 exitProgram=False
