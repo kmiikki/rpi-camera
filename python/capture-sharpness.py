@@ -142,10 +142,18 @@ while True:
     key=cv2.waitKey(1)
     if key in [s,S]:
         SERVER_MODE=not SERVER_MODE
+        print("Server mode: ",end="")
+        if SERVER_MODE:
+            print("Enabled")
+        else:
+            print("Disabled")
         if SERVER_MODE:
             ENABLE_TEMP_VAR=True
         else:
             ENABLE_TEMP_VAR=Enable_Temp_var_default
+            if not varfile=="" and DELETE_LAST_TEMP_VAR:
+                if os.path.exists(varfile):
+                    os.remove(varfile)
     if key in [c,C]:
         basename=name+str(i).zfill(4)+".png"
         filename=subdir+"/"+basename

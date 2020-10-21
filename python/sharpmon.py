@@ -21,9 +21,10 @@ import pathlib
 
 MAX_VALUES=20
 
-def animate(i,xs,ys):
-    
+def animate(i,xs,ys):   
     var=read_variance()
+    if var<0:
+        return
     xs.append(i)
     ys.append(var)
     xs=xs[-MAX_VALUES:]
