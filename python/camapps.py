@@ -31,18 +31,19 @@ menu = [
   [3,7,"Auto white balance (AWB) gains","awb_gains.py"],
   [3,8,"Optimal gains from a calibration file","optimum_gains.py"],
   [3,9,"Calibration","calibratecam.py"],
-  [4,10,"Camera","capturepics-preview.py"],
-  [4,11,"Camera without preview","capturepics.py"],
-  [4,12,"Time-lapse","timelapse.py"],
-  [4,13,"Video recorder","fpsvideo.py"],
-  [5,14,"Create videos from images","gtlvideo.py"],
-  [5,15,"Color analysis","rgbinfo.py"],
-  [5,16,"Split images to RGB channels","rgbsplit.py"],
-  [5,17,"Combine RGB channels to color images","rgbcombine.py"],
-  [5,18,"Split RGB channels to gray scale","bw-rgbsplit.py"],
-  [5,19,"Combine RGB gray scale channels to color images","bw-rgbcombine.py"],
-  [5,20,"Convert images to PNG format","pics2png.py"],
-  [5,21,"Images to time-lapse files","gen_tlfiles.py"]
+  [4,10,"Capture lossless pictures","capturepics-preview.py"],
+  [4,11,"Camera","camera.py"],
+  [4,12,"Camera without preview","capturepics.py"],
+  [4,13,"Time-lapse","timelapse.py"],
+  [4,14,"Video recorder","fpsvideo.py"],
+  [5,15,"Create videos from images","gtlvideo.py"],
+  [5,16,"Color analysis","rgbinfo.py"],
+  [5,17,"Split images to RGB channels","rgbsplit.py"],
+  [5,18,"Combine RGB channels to color images","rgbcombine.py"],
+  [5,19,"Split RGB channels to gray scale","bw-rgbsplit.py"],
+  [5,20,"Combine RGB gray scale channels to color images","bw-rgbcombine.py"],
+  [5,21,"Convert images to PNG format","pics2png.py"],
+  [5,22,"Images to time-lapse files","gen_tlfiles.py"]
  ]
 
 exitProgram=False

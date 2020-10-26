@@ -10,6 +10,7 @@ from rpi.inputs import *
 from rpi.camerainfo import *
 from rpi.roi import *
 
+png_mode=True
 roi_crop_enabled=True
 high_resolution=False
 zoom=(0,0,1,1)
@@ -54,9 +55,15 @@ print("")
 if camera_detected==0:
     print("Raspberry Pi camera module not found!")
     exit(0)
+
+png_mode="y"
+default_png="y"
+png_mode=inputYesNo("PNG","PNG mode on",default_png)
    
-quality_default=90
-quality=inputValue("image quality",1,100,quality_default,"","Quality is out of range!",True)
+# Quality is not required for PNG format
+if png_mode=="n":
+    quality_default=90
+    quality=inputValue("image quality",1,100,quality_default,"","Quality is out of range!",True)
 
 print("\nList disk and partitions:")
 os.system('lsblk')
@@ -131,7 +138,12 @@ if artist!="":
 file.write("Capture pictures parameters:\n")
 file.write("Resolution: "+str(camera_maxx)+"x"+str(camera_maxy)+"\n")
 file.write("Sensor: "+camera_revision+"\n")
-file.write("Quality: "+str(quality)+"\n")
+# Quality is not rquired for PNG format
+if png_mode=="n":
+    file.write("Quality: "+str(quality)+"\n")
+    file.write("Compression: lossy\n")
+else:
+    file.write("Compression: lossless\n")
 file.write("ISO value: "+str(iso)+"\n")
 file.write("Exposure: "+str(exposure)+" µs\n")
 file.write("AWB mode: ")
@@ -143,7 +155,11 @@ else:
     file.write("Blue gain: "+str(awbg_blue)+"\n")
 file.write("Start frame: "+str(framenumber)+"\n")
 file.write("Digits: "+str(digits)+"\n")
-file.write("First file name: "+name+"_"+str(framenumber).rjust(digits,'0')+".png\n")
+file.write("First file name: "+name+"_"+str(framenumber).rjust(digits,'0'))
+if png_mode=="y":
+    file.write(".png\n")
+else:
+    file.write(".jpg\n")
 
 roi_result=validate_roi_values()
 if roi_result==True:
@@ -224,10 +240,16 @@ while framenumber<10**digits:
     print(fname)
     if path!="":
         fname=path+"/"+fname
-    fname=fname+".png"
+    if png_mode=="y":
+        fname=fname+".png"
+    else:
+        fname=fname+".jpg"
     old=camera.zoom
     camera.zoom=(0,0,1,1)
-    camera.capture(fname)
+    if png_mode=="y":
+        camera.capture(fname)
+    else:
+        camera.capture(fname,format="jpeg",quality=quality)
     file.write(fname+"\n")
     framenumber+=1
     camera.zoom=old
