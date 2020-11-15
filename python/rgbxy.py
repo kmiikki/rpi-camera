@@ -122,7 +122,7 @@ for p in sorted(path.iterdir()):
     fig=plt.figure()
     plt.xlabel("X coordinate")
     plt.ylabel("Y coordinate")
-    plt.imshow(img)
+    plt.imshow(cv2.cvtColor(img,cv2.COLOR_BGR2RGB))
     plt.savefig(adir+p.stem+"-img.png",dpi=300)
     if showOriginal:
         plt.show()
