@@ -11,3 +11,5 @@ Open source software for general and special photography:
 - full system Clonezilla images
 
 Supported hardware: Raspberry Pi 3 and 4, HQ camera and version 2.x camera modules
+
+<img src="https://zenodo.org/badge/DOI/10.5281/zenodo.4275964.svg" alt="DOI"></a>
