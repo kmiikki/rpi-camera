@@ -70,7 +70,7 @@ print(curdir)
 print("")
 
 try:
-  if not os.path.exists(xdir):
+  if not os.path.exists(adir):
     os.mkdir(adir)
   if not os.path.exists(xdir) and separateDirs:
     os.mkdir(xdir)
