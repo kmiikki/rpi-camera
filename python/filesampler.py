@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 
 """
-Created on 2020-11-17
+Created on 2020-11-22
 @author: Kim Miikki
 """
 
+import argparse
 import os
 import shutil
 import sys
@@ -18,8 +19,17 @@ files=0
 sample_files=0
 sample_dir="files"
 ext=""
+filter_start=""
+isFilter=False
 fname=""
 file_list=[]
+
+parser=argparse.ArgumentParser()
+parser.add_argument("-f", nargs=1, type=str, help="filter start string",required=False)
+args = parser.parse_args()
+if args.f != None:
+    filter_start=args.f[0]
+    isFilter=True
 
 print("Filesampler")
 
@@ -32,6 +42,8 @@ print("Current directory:")
 print(curdir)
 print("")
 
+if isFilter:
+    print("File start pass filter: "+filter_start)
 normal_mode=inputYesNo("Normal sorting","Normal sort mode",True)
 ext_all=inputYesNo("Select all","List all files",True)
 
@@ -66,6 +78,9 @@ for p in sorted(path.iterdir(),reverse=not normal_mode):
   if p.is_file():
     if suffix==ext or ext_all:
         fname=p.name
+        if isFilter:
+            if fname.find(filter_start)!=0:
+                continue
         file_list.append(fname)
 files=len(file_list)
 files_half=files // 2

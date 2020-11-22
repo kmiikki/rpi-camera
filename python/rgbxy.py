@@ -123,7 +123,7 @@ for p in sorted(path.iterdir()):
     plt.xlabel("X coordinate")
     plt.ylabel("Y coordinate")
     plt.imshow(cv2.cvtColor(img,cv2.COLOR_BGR2RGB))
-    plt.savefig(adir+p.stem+"-img.png",dpi=300)
+    plt.savefig(adir+"img-"+p.stem+".png",dpi=300)
     if showOriginal:
         plt.show()
     plt.close(fig)
@@ -145,7 +145,7 @@ for p in sorted(path.iterdir()):
     plt.plot(xrgbs[:,0],color="b")
     plt.xlabel("Column (X) coordinate")
     plt.ylabel("RGB mean")
-    plt.savefig(xdir+p.stem+"-xRGB.png",dpi=300)
+    plt.savefig(xdir+"xRGB-"+p.stem+".png",dpi=300)
     if showXs and showChannels:
         plt.show()
     plt.close(fig)
@@ -158,7 +158,7 @@ for p in sorted(path.iterdir()):
     plt.plot(xbws,color="k")
     plt.xlabel("Column (X) coordinate")
     plt.ylabel("BW mean")
-    plt.savefig(xdir+p.stem+"-xBW.png",dpi=300)
+    plt.savefig(xdir+"xBW-"+p.stem+".png",dpi=300)
     if showXs and showBW:
         plt.show()
     plt.close(fig)
@@ -172,7 +172,7 @@ for p in sorted(path.iterdir()):
     plt.plot(yrgbs[:,0],color="b")
     plt.xlabel("Row (Y) coodinate")
     plt.ylabel("RGB mean")
-    plt.savefig(ydir+p.stem+"-yRGB.png",dpi=300)
+    plt.savefig(ydir+"yRGB-"+p.stem+".png",dpi=300)
     if showYs and showChannels:
         plt.show()
     plt.close(fig)
@@ -185,7 +185,7 @@ for p in sorted(path.iterdir()):
     plt.plot(ybws,color="k")
     plt.xlabel("Row (Y) coordinate")
     plt.ylabel("BW mean")
-    plt.savefig(ydir+p.stem+"-yBW.png",dpi=300)
+    plt.savefig(ydir+"yBW-"+p.stem+".png",dpi=300)
     if showYs and showBW:
         plt.show()
     plt.close(fig)
@@ -193,8 +193,8 @@ for p in sorted(path.iterdir()):
     xresults=np.column_stack((xs,xrgbs,xbws))
     yresults=np.column_stack((ys,yrgbs,ybws))
     fmt="%d","%1.3f","%1.3f","%1.3f","%1.3f"
-    np.savetxt(xdir+p.stem+"-x.csv", xresults, fmt=fmt, delimiter=",")
-    np.savetxt(ydir+p.stem+"-y.csv", yresults, fmt=fmt, delimiter=",")
+    np.savetxt(xdir+"x-"+p.stem+".csv", xresults, fmt=fmt, delimiter=",")
+    np.savetxt(ydir+"y-"+p.stem+".csv", yresults, fmt=fmt, delimiter=",")
 t2=datetime.now()
 
 print("\nPictures analyzed: "+str(pictures))
