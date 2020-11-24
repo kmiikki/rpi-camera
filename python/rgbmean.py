@@ -35,7 +35,7 @@ outname="rgb.csv"
 
 parser=argparse.ArgumentParser()
 parser.add_argument('-s',type=float,help="start time for first frame as float",required=False)
-parser.add_argument('-i',type=float,help="interval betewwn two frames as float",required=False)
+parser.add_argument('-i',type=float,help="interval between two frames as float",required=False)
 parser.add_argument("-u", nargs="*", type=str,help="x unit string",required=False)
 parser.add_argument("-y", action="store_true", help="auto scale y axis")
 parser.add_argument("-d", action="store_true", help="display figures")
