@@ -16,7 +16,7 @@ tlcron.py -c: Capture a time-lapse picture
 'path to time-lapse directory':     time-lapse shooting started
 -                                   time-lapse shooting stopped
 
-Required moudule installation:
+Required module installation:
 sudo pip3 install python-crontab
 
 """
@@ -248,7 +248,7 @@ if not True in [startTL,stopTL,captureTL]:
     file.write("#"+curdir)
     file.close()
 
-    # Delete old tlid file if found
+    # Delete old TLID file if found
     try:
         os.remove(project_dir+"/"+idfile)
     except:
@@ -425,7 +425,7 @@ if stopTL:
     user_cron.remove_all()
     user_cron.write()
     
-    # Remove lock and tlid files
+    # Remove lock and TLID files
     try:
         if project_dir.find("#")==0:
             project_dir=project_dir[1:]
