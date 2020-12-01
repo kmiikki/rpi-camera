@@ -1,0 +1,121 @@
+Restore Clonezilla image
+------------------------
+Release 2020.09.16 -> 32 GB micro-SD
+
+
+Update system and install programs 1.12.2020
+--------------------------------------------
+sudo apt update
+sudo apt dist-upgrade
+# sudo pip3 install --upgrade pip
+sudo apt install imagemagick
+sudo apt install inkscape inkscape-open-symbols
+sudo apt install meld
+sudo /usr/bin/python3 -m pip install --upgrade pip
+
+numpy
+-----
+sudo pip3 install numpy==1.19.4 --extra-index-url https://www.piwheels.org/simple
+
+matplotlib
+----------
+sudo pip3 install matplotlib==3.3.3 --extra-index-url https://www.piwheels.org/simple
+
+scipy
+-----
+sudo pip3 install scipy==1.5.4 --extra-index-url https://www.piwheels.org/simple
+
+Wand
+----
+sudo apt install libmagickwand-dev
+sudo pip3 install wand==0.6.5 --extra-index-url https://www.piwheels.org/simple
+
+Shapely
+-------
+sudo pip3 install --no-binary :all: Shapely
+
+imageio
+-------
+sudo pip3 install imageio==2.9.0 --extra-index-url https://www.piwheels.org/simple
+
+imageio-ffmpeg
+--------------
+sudo pip3 install imageio-ffmpeg==0.4.2 --extra-index-url https://www.piwheels.org/simple
+
+python-crontab
+--------------
+sudo pip3 install python-crontab
+
+PySimpleGUI
+-----------
+sudo pip3 install PySimpleGUI==4.32.1
+
+Misc
+====
+sudo pip3 install scikit-learn
+sudo pip3 install scikit-image
+sudo pip3 install envbash
+sudo pip3 install tabulate
+sudo pip3 install pip-date
+sudo pip3 install colorama==0.4.4
+sudo pip3 install pandas==1.1.4
+sudo pip3 install Pillow==8.0.1
+sudo pip3 install pyperclip==1.8.1
+sudo pip3 install pytz==2020.4
+sudo pip3 install Sphinx==3.3.1
+sudo pip3 install ExifRead==2.3.2
+
+======================
+opencv-python 4.4.0.46
+======================
+Rebuild:
+$ sudo pip3 install --force-reinstall --ignore-installed --no-binary :all: opencv-python
+Looking in indexes: https://pypi.org/simple, https://www.piwheels.org/simple
+Collecting opencv-python
+  Downloading opencv-python-4.4.0.46.tar.gz (88.9 MB)
+     |████████████████████████████████| 88.9 MB 7.1 kB/s 
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+    Preparing wheel metadata ... done
+Collecting numpy>=1.14.5
+  Downloading numpy-1.19.4.zip (7.3 MB)
+     |████████████████████████████████| 7.3 MB 19 kB/s 
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+    Preparing wheel metadata ... done
+Building wheels for collected packages: opencv-python, numpy
+  Building wheel for opencv-python (PEP 517) ... done
+  Created wheel for opencv-python: filename=opencv_python-4.4.0.46-cp37-cp37m-linux_armv7l.whl size=9639994 sha256=ceabfae2ad0c4a2adc0f03c5f22c06638c1ee257c1ec814392fa6284002226a8
+  Stored in directory: /root/.cache/pip/wheels/04/c3/d6/95dd199c4fdf685c4484576ed4dab1f9b8f79efd3291f9506d
+  Building wheel for numpy (PEP 517) ... done
+  Created wheel for numpy: filename=numpy-1.19.4-cp37-cp37m-linux_armv7l.whl size=10457132 sha256=e999f6d65d609bdb5582b6c887e364a8abab866662eeeadcdfab308cd5cc38bb
+  Stored in directory: /root/.cache/pip/wheels/b6/c9/99/bb6b9b0927c2fd5c1d75288ec8a1e1aec901edac332536dedd
+Successfully built opencv-python numpy
+Installing collected packages: numpy, opencv-python
+Successfully installed numpy-1.19.4 opencv-python-4.4.0.46
+
+Build time: ~2.5 h
+
+rpi-camera suite 2020-11-29
+---------------------------
+Unzip rpi-camera-master.zip
+$ cd rpi-camera-master/install
+$ bash deploy-tools.sh 
+
+Clean up
+--------
+Chromium history, bash history, ipython3-history, spyder3-history
+
+$ rm ~/.ipython/profile_default/history.sqlite
+$ rm ~/.config/spyder-py3/history.py
+$ exit
+
+Delete ~/.bash_history
+
+Chromium:
+... > More tools > Clear browsing data...
+	Time range: All time
+	[v] Browsing history
+	[v] Cookies and other site data
+	[v] Cached images and files
+
