@@ -12,4 +12,6 @@ Open source software for general and special photography:
 
 Supported hardware: Raspberry Pi 3 and 4, HQ camera and version 2.x camera modules
 
-<a href="https://doi.org/10.5281/zenodo.4275964"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.4275964.svg" alt="DOI"></a>
+
+
+<a href="https://doi.org/10.5281/zenodo.4300692"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.4300692.svg" alt="DOI"></a>
