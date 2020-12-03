@@ -52,7 +52,9 @@ firstFrame=False
 previewImage=False
 
 minutes_min=1
-minutes_max=525950
+# Julian year: 1 a = 365.25 d
+a=365.25
+minutes_max=int(a*24*60)
 
 # Default parameters
 params={
@@ -115,10 +117,10 @@ def time_and_unit(minimum,maximum):
     if q>=1:
         unit="d"
         divisor*=24
-    q=minimum // (60*24*365.2425)
+    q=minimum // (60*24*365.25)
     if q>=1:
         unit="a"
-        divisor*=365.2425
+        divisor*=a
     t1=minimum/divisor
     t2=maximum/divisor
     if float(t1).is_integer() and float(t2).is_integer():

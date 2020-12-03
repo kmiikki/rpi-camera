@@ -82,8 +82,22 @@ for p in sorted(path.iterdir(),reverse=not normal_mode):
             if fname.find(filter_start)!=0:
                 continue
         file_list.append(fname)
+
+"""
+Intervals:
+
+123456    interval comment
+111111    1        file sampling not required
+101010    2        minimum sampling interval
+100100    3	
+100010    4
+100001    5
+100000(1) 6
+"""
+
 files=len(file_list)
-files_half=files // 2
+#files_half=files // 2
+max_interval=files
 
 if files<2:
     print("")
@@ -92,19 +106,21 @@ if files<2:
     print("")
     sys.exit(0)
 
+## Enable a sampling range if files > 2
 if files>2:
     interval_mode=inputYesNo("Interval","Use interval",True)
     if interval_mode:
-        interval=inputValue("interval:",2,files_half,2,"","Interval is out of range!",True)
+        interval=inputValue("interval:",2,max_interval,2,"","Interval is out of range!",True)
     else:
         # Calculate minumum %
-        pmin=round(2/files*100,2)
+        pmin=round(1/max_interval*100,2)
         pmax=50
-        percent=inputValue("sample percent:",pmin,pmax,pmax,"%","Percent is out of range!",True)
-        interval=int(100/percent)
+        percent=inputValue("sample percent:",pmin,pmax,pmax,"%","Percent is out of range!",False)
+        interval=int(round(100/percent,0))
         print("Calculated interval: "+str(interval))
 else:
     interval=2
+    print("Interval set to 2")
 
 inverse=inputYesNo("Inverse mode","Inverse sampling",False)
 
