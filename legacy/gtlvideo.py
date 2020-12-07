@@ -8,14 +8,10 @@ import sys
 import math
 import re
 import numpy as np
-import cv2
 import pandas as pd
 
-# gtlvideo version 1.1
-# OpenCV based crop/resize instead of ffmpeg: 3.5x processing speedup
-
 # Global variables
-version_text="1.1"
+version_text="1.00"
 copyright_text="(C) Kim Miikki 2019"
 project_name=""
 isProjectName=False
@@ -83,7 +79,7 @@ different_names_jpg=False
 wn=0 #n=native
 hn=0
 
-files=0 # Total files count of automatically selected picture format
+files=0 # Total files count of  automatically selected picture format
 
 wc=0 #c=custom
 hc=0
@@ -122,14 +118,6 @@ ycrop2=0
 
 selection=0
 crop_selection=0
-
-inter_methods=[cv2.INTER_NEAREST,
-               cv2.INTER_LINEAR,
-               cv2.INTER_CUBIC,
-               cv2.INTER_AREA,
-               cv2.INTER_LANCZOS4
-               ]
-method=2
 
 fps=0
 crf=0
@@ -1189,6 +1177,11 @@ while True:
 # Ask for Constant Rate Factor (=CRF)
 # ffmpeg paramters: -rc cbr_hq -b:v 144.1M
 # ffmpeg -i input.mp4 -c:v libx264 -crf 23 output.mp4
+#
+# To get the a part  of an image ffmpeg can be use
+# ffmpeg -i input.png -vf  "crop=w:h:x:y" input_crop.png
+# where -vf  video filter
+# w : width , h height , x and y are the left top coordinates of image
 
 while True:
   try:
@@ -1223,7 +1216,7 @@ else:
 list_summary.append("Project name: "+s)
 list_summary.append("Video name:   "+video_name)
 list_summary.append("")
-#print(wn,hn,xnew,ynew)
+print(wn,hn,xnew,ynew)
 if wn==xnew and hn==ynew:
   native_video=True
 if native_video:
@@ -1303,17 +1296,47 @@ if file_format=="CR2":
   stage+=1
   list_summary.append(cr2_cmd)
 
+# 1.ffmpeg -i input.png -vf  "crop=w:h:x:y" input_crop.png
+# Image size:                   5184x3456
+# Video size:                   5184x3456
+#
+# Cropped image size:           5184x2916
+# Video size:                   3840x2160
+#
+#
+# ffmpeg -i input.png -vf  "crop=3840:2160:0:0" output.png
+
 # Crop images?
-png_txt=""
 if (xnew<wn) or (ynew<hn):
-  png_txt="Crop/resize processing"
+  # FORMAT: ffmpeg -y -i input.png -vf  "crop=xnew:ynew:xcrop1:ycrop1" output.png
+  # for i in *.png ; do ffmpeg -i "$i" -vf scale=3840:2557 /home/.../Pictures/2019/07/20190726-timelapse/c/png/"$(basename "$i"-3840)".png ; done
+  # ffmpeg -y -i input.png -vf crop=3840:2160:0:0,scale=800:600 output.png
+  if file_format=="CR2":
+    input_path=png_path
+    suffix=".png"
+  else:
+    input_path=source_path
+  if file_format=="PNG":
+    suffix=png_suffix
+  if file_format=="JPG":
+    suffix=jpg_suffix
+  png_cmd="for i in "+input_path+"*"+suffix+" ; do ffmpeg -y -i \"$i\" " 
+  png_cmd+="-vf crop="+str(xnew)+":"+str(ynew)+":"+str(xcrop1)+":"+str(ycrop1)
+  if crmode=="y":
+    png_cmd+=",scale="+str(videox)+":"+str(videoy)
+  png_cmd+=" "
+  output_path=png_path
+  png_cmd+=output_path+"\""
+  if isProjectName:
+    png_cmd+=project_name+"-"
+  png_cmd+="$(basename \"$i\" \""+suffix+"\")\".png ; done"
   list_summary.append("")
   if file_format!="CR2":
     list_summary.append("Stage "+str(stage)+": "+file_format+"->PNG")
   else:
     list_summary.append("Stage "+str(stage)+": PNG->PNG")
   stage+=1
-  list_summary.append(png_txt)
+  list_summary.append(png_cmd)
   input_path=png_path
 else:
   # Native mode images -> native mode video (no cropping or resizing)
@@ -1419,51 +1442,15 @@ for text in list_summary:
 # Execute commands
 stage=1
 timearray=[datetime.now()]
-
 if cr2_cmd!="":
   print("\nStage "+str(stage)+":")
   stage+=1
   os.system(cr2_cmd)
   timearray.append(datetime.now())
-
-if png_txt!="":
+if png_cmd!="":
   print("\nStage "+str(stage)+":")
   stage+=1
-  if (xnew<wn) or (ynew<hn):
-    # OpenCV crop and resize
-    if file_format=="CR2":
-      input_path=png_path
-      suffix=".png"
-    else:
-      input_path=source_path
-    if file_format=="PNG":
-      suffix=png_suffix
-    if file_format=="JPG":
-      suffix=jpg_suffix
-  
-    path=Path(input_path)
-    for p in sorted(path.iterdir()):
-      if p.is_file() and p.suffix.lower()==suffix:
-        fname=p.name
-        try:
-          image = cv2.imread(str(path)+"/"+fname)
-        except:
-          print("Unable to open: "+fname)
-          continue
-        else:
-          try:
-            if crop:
-              image=image[ycrop1:ycrop1+ynew, xcrop1:xcrop1+xnew]
-            if crmode=="y":
-              image=cv2.resize(image,(videox,videoy),interpolation=inter_methods[method])
-            png_out=png_path
-            if isProjectName:
-              png_out+=project_name+"-"
-            png_out+=p.stem+".png"
-            print(fname)
-            cv2.imwrite(png_out,image)
-          except:
-            continue
+  os.system(png_cmd)
   timearray.append(datetime.now())
 if mkv_cmd!="":
   print("\nStage "+str(stage)+":")

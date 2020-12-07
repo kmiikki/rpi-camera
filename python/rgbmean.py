@@ -193,7 +193,7 @@ if pictures>1:
 
 header="picture_name"+delimiter
 if unit_mode:
-    header+="time "+"["+unit+"}"+delimiter
+    header+="time "+"["+unit+"]"+delimiter
 else:
    header+="number"+delimiter
 header+="bw"+delimiter
