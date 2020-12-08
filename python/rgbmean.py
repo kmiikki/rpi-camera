@@ -137,12 +137,12 @@ for p in sorted(path.iterdir()):
     b_avg=round(rgb_means[0],decimals)
     bw_avg=round((r_avg+g_avg+b_avg)/3,decimals+3)
     files.append(fname)
+    t=start+(pictures-1)*interval
+    t=round(t,3)
     if unit_mode:
         rgb.append([t,round(bw_avg,3),round(r_avg,3),round(g_avg,3),round(b_avg,3)])
     else:
         rgb.append([pictures,round(bw_avg,3),round(r_avg,3),round(g_avg,3),round(b_avg,3)])
-    t+=interval
-    t=round(t,3)
 t2=datetime.now()
 
 matrix=np.array(rgb,dtype="object")
