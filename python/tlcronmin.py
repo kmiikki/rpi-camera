@@ -399,7 +399,6 @@ if captureTL or firstFrame:
                 capture+="-ex auto "
             else:
                 capture+="-ss "+str(params["ss"])+" "
-                capture+="-ex off "
             if params["awb"]:
                 capture+="-awb auto "
             else:
