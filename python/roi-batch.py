@@ -5,10 +5,12 @@ import cv2
 import csv
 import os
 import sys
+import argparse
 from pathlib import Path
 from datetime import datetime
 import re
 from rpi.roi import *
+from rpi.inputs2 import *
 
 CONVERT_TO_PNG=False
 
@@ -28,6 +30,20 @@ def newFilename(oldname,ext):
   return newname
 
 print("ROI batch crop tool")
+
+parser=argparse.ArgumentParser()
+parser.add_argument("-i", action="store_true", help="interactive mode")
+parser.add_argument("-p", action="store_true", help="save images in lossless PNG format")
+args = parser.parse_args()
+
+original_format=True
+if args.p:
+    original_format=False
+
+if args.i:
+    print("")
+    original_format=inputYesNo("original format","Keep original format instead of PNG",
+                               original_format)
 print("")
 
 errors=validate_img_crop()
@@ -76,7 +92,11 @@ for p in sorted(path.iterdir()):
       continue
     else:
       try:
-        newname=newFilename(p.stem,p.suffix)
+        if original_format:
+            ext=p.suffix
+        else:
+            ext=".png"
+        newname=newFilename(p.stem,ext)
         fullpath=pngdir+"/"+newname
         if same_dimensions:
             # Crop image
