@@ -24,6 +24,7 @@ t=0.0
 start=0.0
 interval=1.0
 decimals=10
+decimals_time=3
 unit=""
 delimiter=","
 isStart=False
@@ -33,6 +34,7 @@ scale_y=False
 file_mode=False
 unit_mode=False
 display_mode=False
+new_times=False
 
 adir="rgb"
 outname="rgb.csv"
@@ -46,9 +48,6 @@ parser.add_argument("-u", nargs="*", type=str,help="x unit string",required=Fals
 parser.add_argument("-y", action="store_true", help="auto scale y axis")
 parser.add_argument("-d", action="store_true", help="display figures")
 args = parser.parse_args()
-
-if args.f:
-    file_mode=True
 
 if args.s != None:
     start=float(args.s)
@@ -77,13 +76,18 @@ if args.y:
 if args.d:
     display_mode=True
 
+if args.f:
+    file_mode=True
+    if unit_mode:
+        new_times=True
+
 print("RGBmean 1.0, (c) Kim Miikki 2020")
 
 curdir=os.getcwd()
 path=Path(curdir)
 adir=str(path)+"/"+adir+"/"
 
-if not file_mode:
+if (not file_mode) or new_times:
     try:
       if not os.path.exists(adir):
         os.mkdir(adir)
@@ -143,7 +147,7 @@ if not file_mode:
         h,w,ch=img.shape
         if ch==1:
           print(fname+" has only 1 channel. Skipping file.")
-          continue
+          continue                    
         rgb_means=np.array(img).mean(axis=(0,1))
         pictures+=1
         if pictures==1:
@@ -152,10 +156,10 @@ if not file_mode:
         r_avg=round(rgb_means[2],decimals)
         g_avg=round(rgb_means[1],decimals)
         b_avg=round(rgb_means[0],decimals)
-        bw_avg=round((r_avg+g_avg+b_avg)/3,decimals+3)
+        bw_avg=round((r_avg+g_avg+b_avg)/3,decimals)
         files.append(fname)
         t=start+(pictures-1)*interval
-        t=round(t,3)
+        t=round(t,decimals_time)
         if unit_mode:
             tmp=str(t)
         else:
@@ -173,14 +177,14 @@ if not file_mode:
 else:
     # File mode: Read RGB.csv file
     try:
-        file=open(outname,"r")
+        file_rgb=open(outname,"r")
     except OSError:
         print("Unable to open "+outname+" in following directory:\n"+curdir)
         print("Program is terminated.")
         print("")
         sys.exit(1)
     else:
-        csv_reader=csv.reader(file,delimiter=delimiter)
+        csv_reader=csv.reader(file_rgb,delimiter=delimiter)
         header=next(csv_reader)
         columns=6
         isOk=True
@@ -191,7 +195,7 @@ else:
             if header[1]=="number":
                 unit=""
                 unit_mode=False
-            else:
+            elif not new_times:
                 # Unit template: time [h] -> h
                 unit=header[1]
                 if len(unit)>2:
@@ -202,6 +206,8 @@ else:
                     else:
                         unit=""
                     unit_mode=True
+                else:
+                    unit_mode=True
         # Read RGB values
         if isOk:
             for row in csv_reader:
@@ -211,13 +217,20 @@ else:
                     isOk=False
                     continue
                 if unit_mode:
-                    t=float(row[1])
+                    if not new_times:
+                        t=float(row[1])
+                    else:
+                        t=start+pictures*interval
+                        t=round(t,decimals_time)
                 else:
                     t=int(row[1])
                 rgb.append([t,float(row[2]),float(row[3]),float(row[4]),float(row[5])])
+                if new_times:
+                    files.append(row[0])
                 pictures+=1
-        file.close()
-        adir=""
+        file_rgb.close()
+        if not new_times:
+            adir=""
         if not isOk:
             print("")
             print("Invalid "+outname+" file. Program is terminated.")
@@ -285,7 +298,7 @@ if pictures>1:
     plt.close(fig)
 
 print("")
-if not file_mode:
+if (not file_mode) or new_times:
     header="picture_name"+delimiter
     if unit_mode:
         header+="time "+"["+unit+"]"+delimiter
