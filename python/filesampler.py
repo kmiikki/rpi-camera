@@ -21,12 +21,35 @@ sample_dir="files"
 ext=""
 filter_start=""
 isFilter=False
+isBareNumber=False
+isConsequentNumbering=False
+isDigits=False
 fname=""
+stem=""
+numinverse=0
+numsamples=0
+filedigits=0
+mindigits=0
+auto_digits=0
+digits=0
 file_list=[]
 
 parser=argparse.ArgumentParser()
+parser.add_argument("-b", action="store_true", help="bare number as file name stem")
+parser.add_argument("-n", action="store_true", help="consequent numbering of sampled files")
+parser.add_argument("-d", type=int, help="number of digits in sampled files (override auto digits)", required=False)
 parser.add_argument("-f", nargs=1, type=str, help="filter start string",required=False)
 args = parser.parse_args()
+
+if args.b:
+    isBareNumber=True
+if args.n:
+    isConsequentNumbering=True
+if args.d != None:
+    digits=int(args.d)
+    if digits<1:
+        digits=1
+    isDigits=True
 if args.f != None:
     filter_start=args.f[0]
     isFilter=True
@@ -137,20 +160,77 @@ include (inverse):
 -,2,3,4,5,-,7,8,9,10, -,12
 """
 
+stem=file_list[0]
+stem=os.path.splitext(stem)[0]
+
+# Calculate auto_digits and extrac stem without numbering
+if isBareNumber or isConsequentNumbering or isDigits:
+    for c in reversed(stem):
+        if c.isdigit():
+            filedigits+=1
+        else:
+            break
+    if filedigits>0:
+        stem=stem[:-filedigits]
+    numsamples=1+int((files-1)/interval)
+    numinverse=files-numsamples
+    if inverse:
+        mindigits=len(str(numinverse))
+    else:
+        mindigits=len(str(numsamples))
+    if filedigits<mindigits:
+        filedigits=mindigits
+    auto_digits=filedigits
+
+if isDigits:
+    if digits<auto_digits:
+        print("\nWarning: Option digits is smaller than sampled files digits ("+
+              str(digits)+" < "+str(auto_digits)+")")
+else:
+    digits=auto_digits
+
 t1=datetime.now()
 i=0
+s=0
 for f in file_list:
     sample=False
     r=i % interval
+    i+=1
     if inverse and r>0:
         sample=True
     elif not inverse and r==0:
         sample=True
-    if sample:            
-        shutil.copy2(f,sample_dir+"/"+f)
-        #print(i,i % interval,f)
+    if sample:
+        newfile=""
+        if isConsequentNumbering:
+            s+=1
+            if len(str(s))>digits:
+                print("Skip: "+f+", digits exceeded")
+                continue
+            if not isBareNumber:
+                newfile=stem
+            newfile+=str(s).rjust(digits,"0")
+            suffix=os.path.splitext(f)[1]
+            if len(suffix)>0:
+                newfile+=suffix
+        else:
+            if not (isDigits or isBareNumber):
+                newfile=f
+            else:
+                stem=os.path.splitext(f)[0]
+                number=int(stem[-auto_digits:])
+                if len(str(number))>digits:
+                    print("Skip: "+f+", digits exceeded")
+                    continue
+                stem=stem[:-auto_digits]
+                if not isBareNumber:
+                    newfile=stem
+                newfile+=str(number).rjust(digits,"0")
+                suffix=os.path.splitext(f)[1]
+                if len(suffix)>0:
+                    newfile+=suffix
         sample_files+=1
-    i+=1
+        shutil.copy2(f,sample_dir+"/"+newfile)
 
 t2=datetime.now()
 
