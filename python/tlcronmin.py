@@ -25,6 +25,7 @@ import argparse
 import ast
 import csv
 import datetime
+import gc
 import os
 import sys
 from crontab import CronTab
@@ -478,3 +479,12 @@ if stopTL:
         False
     print("Time-lapse job finished.")
     
+# Clean up memory
+
+# Force a sweep
+gc.collect()
+    
+# Clear references held by gc.garbage
+del gc.garbage[:]
+
+

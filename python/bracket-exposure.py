@@ -73,7 +73,7 @@ if roi_file_exists:
     file.write(roi_string+"\n")
 else:
     file.write("FOV")
-file.write("ņ")
+file.write("\n")
 file.write("Sensor: "+camera_revision+"\n")
 file.write("Quality: "+str(quality)+"\n")
 file.write("ISO value: "+str(iso)+"\n\n")
