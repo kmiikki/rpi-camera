@@ -8,6 +8,7 @@ Created on Sun Jan 24 23:46:39 2021
 
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 from datetime import datetime
 
 units=["s","min","h","d"]
@@ -47,16 +48,26 @@ table=[]
 
 print("Memory Log File Analyzer")
 print("")
-print("Analyzing "+logfile)
-for row in open(logfile):
-    # Header line
-    if lines==0:
-        labels=row.split()
+try:
+    for row in open(logfile):
+        # Header line
+        if lines==0:
+            labels=row.split()
+            lines+=1
+            continue
+        table.append(parseRow(row))
         lines+=1
-        continue
-    table.append(parseRow(row))
-    lines+=1
+except:
+    print("No "+logfile+" file found! The program is terminated.")
+    sys.exit(1)
+
+print("Analyzing "+logfile)    
 rows=len(table)
+
+if rows<2:
+    print("At least 2 measurements are required for interval calculation!")
+    sys.exit(0)
+
 start=table[0][0]
 end=table[rows-1][0]
 t=(end-start).seconds

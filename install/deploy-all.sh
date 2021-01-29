@@ -27,4 +27,5 @@ sudo chmod ugo+rx /opt/tools/rpi/*.py
 sudo chmod ugo+rx /opt/scripts/*.sh
 
 # Restart the system
+read -n1 -rsp $'\nPress any key to reboot...\n'
 reboot
