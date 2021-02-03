@@ -70,7 +70,7 @@ if rows<2:
 
 start=table[0][0]
 end=table[rows-1][0]
-t=(end-start).seconds
+t=(end-start).total_seconds()
 interval=round(t/(rows-1))
 u,divisor=unit(t)
 t_unit=t/divisor
