@@ -24,6 +24,7 @@ isFilter=False
 isBareNumber=False
 isConsequentNumbering=False
 isDigits=False
+isLog=True
 fname=""
 stem=""
 numinverse=0
@@ -34,6 +35,15 @@ auto_digits=0
 digits=0
 file_list=[]
 
+def option_str(option,selected,end="\n"):
+    s=option+": "
+    if selected:
+        s+="Yes"
+    else:
+        s+="No"
+    s+=end
+    return s
+
 parser=argparse.ArgumentParser()
 parser.add_argument("-b", action="store_true", help="bare number as file name stem")
 parser.add_argument("-n", action="store_true", help="consequent numbering of sampled files")
@@ -41,18 +51,29 @@ parser.add_argument("-d", type=int, help="number of digits in sampled files (ove
 parser.add_argument("-f", nargs=1, type=str, help="filter start string",required=False)
 args = parser.parse_args()
 
+arguments=""
 if args.b:
     isBareNumber=True
+    arguments+="-b"
 if args.n:
     isConsequentNumbering=True
+    if len(arguments)>0:
+        arguments+=" "
+    arguments+="-n"
 if args.d != None:
     digits=int(args.d)
     if digits<1:
         digits=1
     isDigits=True
+    if len(arguments)>0:
+        arguments+=" "
+    arguments+="-d "+str(digits)
 if args.f != None:
     filter_start=args.f[0]
     isFilter=True
+    if len(arguments)>0:
+        arguments+=" "
+    arguments+="-f "+filter_start
 
 print("Filesampler")
 
@@ -189,6 +210,35 @@ if isDigits:
 else:
     digits=auto_digits
 
+# Create a log file
+file=open("filesampler.log","w")
+file.write("filesampler\n\n")
+file.write("Source directory: "+curdir+"\n")
+dst=curdir
+if dst!="/":
+    dst+="/"
+dst+=sample_dir
+file.write("Sample directory: "+dst+"\n\n")
+if len(arguments)>0:
+    file.write("Arguments: "+arguments+"\n\n")
+file.write("Options:\n")
+if isFilter:
+    file.write("File start pass filter : "+filter_start+"\n")
+file.write(option_str("Bare numbering of files",isBareNumber))
+file.write(option_str("Consequent numbering   ",isConsequentNumbering))
+file.write("Digits: "+str(digits)+"\n")
+file.write(option_str("Normal sort mode",normal_mode))
+file.write(option_str("List all files",ext_all))
+if not ext_all:
+    file.write("Extension for files included in search: "+ext+"\n")
+file.write(option_str("Interval mode",interval_mode))
+if interval_mode:
+    file.write("Interval: "+str(interval)+"\n")
+else:
+    file.write("Sample percent     : "+str(percent)+" %\n")
+    file.write("Calculated interval: "+str(interval)+"\n")
+file.write(option_str("Inverse sampling",inverse))
+
 t1=datetime.now()
 i=0
 s=0
@@ -218,7 +268,11 @@ for f in file_list:
                 newfile=f
             else:
                 stem=os.path.splitext(f)[0]
-                number=int(stem[-auto_digits:])
+                try:                
+                    number=int(stem[-auto_digits:])
+                except:
+                    print("Skip: "+f+", '"+stem[-auto_digits:]+"' is not a valid number")
+                    continue
                 if len(str(number))>digits:
                     print("Skip: "+f+", digits exceeded")
                     continue
@@ -234,5 +288,8 @@ for f in file_list:
 
 t2=datetime.now()
 
+file.write("\nFiles sampled: "+str(sample_files)+"\n")
+file.write("Time elapsed: "+str(t2-t1)+"\n")
+file.close()
 print("\nFiles sampled: "+str(sample_files))
 print("Time elapsed: "+str(t2-t1))

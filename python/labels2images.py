@@ -25,7 +25,7 @@ STRING3
 Header lines: 4
 
 String format:
-12:40:00   Frame 1, Display frame unless - is specified
+12:40:00   Frame 1, Display frame unless -- is specified
 12:40:01-- Frame 2, Hide text from this frame onwards
 12:40:02   Frame 3, Hidden frame
 12:40:03++ Frame 4, Display text from this frame onwards
@@ -38,15 +38,17 @@ import math
 import os
 import pathlib
 import sys
-import time
+from datetime import datetime
 from pathlib import Path
 from rpi.inputs2 import *
 
 units=["ms","s","min","h","d"]
 divisors=[1,1000,1000*60,1000*60*60,1000*60*60*365]
+positions=["","TL","TC","TR","CL","CC","CR","BL","BC","BR"]
 
 font = cv2.FONT_HERSHEY_DUPLEX
 
+max_decimals=10
 # Internal mode
 # Color values are in BGR format
 text_color=(255,255,255)
@@ -59,6 +61,7 @@ hspace=10
 rect_color=(0,0,0)
 rect_alpha = 0.2
 
+int_sample=""
 text_prefix="t= "
 decimals_time=3
 dst="labelpics"
@@ -79,17 +82,18 @@ ts_marginal_y=50
 ts_vspace=10
 ts_hspace=10
 ts_texts=[]
+ts_sample=""
 ts_text_max=0
 ts_visible=[]
 ts_visible_line=0
 is_ts_visible=True
 
-# TS mode
+# PTS mode
 timelabels_ts="timelabels.ts"
 pts_file="timelabels.pts"
-pts_text_color=(0,255,0)
+pts_text_color=(255,255,255)
 pts_text_scale=1
-pts_rect_color=(128,128,0)
+pts_rect_color=(64,64,64)
 pts_rect_alpha=0.4
 ptsAlphaText=False
 pts_marginal_x=30
@@ -98,6 +102,7 @@ pts_vspace=10
 pts_hspace=10
 pts_values=[]
 pts_texts=[]
+pts_sample=""
 pts_unit=""
 pts_divisor=1
 pts_decimals=2
@@ -105,6 +110,9 @@ pts_decimals=2
 isInterval=True
 isTS=False
 isPTS=False
+pos_i=0
+pos_ts=0
+pos_pts=0
 isCommonAlpha=False
 common_alpha=0.4
 
@@ -113,7 +121,7 @@ def getTextInfo(text,font,scale=1.0):
     (text_width,text_height),baseline=cv2.getTextSize(text,font,scale,1)
     return text_width,text_height
 
-def getRectCoordinates(offset_x,offset_y,hspace,vspace,text_height):
+def getRectCoordinates(offset_x,offset_y,hspace,vspace,text_width,text_height):
     x0=offset_x-hspace
     y0=offset_y-text_height-vspace
     x1=offset_x+text_width+hspace
@@ -168,8 +176,10 @@ def TextPosition(label,width,height,hspace,vspace,text_width,text_height,margina
     rect_x0,rect_y0,rect_x1,rect_y1=getRectCoordinates(text_x,
                                                        text_y,
                                                        hspace,
-                                                       vspace,text_height)    
-    return text_x,text_y,rect_x0,rect_y0,rect_x1,rect_y1
+                                                       vspace,
+                                                       text_width,
+                                                       text_height)    
+    return text_x,text_y,rect_x0,rect_y0,rect_x1,rect_y1,mode
 
 def parseRGB(rgbString):
     r=0
@@ -207,6 +217,29 @@ def autounit(timeval):
         divisor*=24   
     return units[u],divisor
 
+def option_str(option,selected,end="\n"):
+    s=option+": "
+    if selected:
+        s+="Yes"
+    else:
+        s+="No"
+    s+=end
+    return s
+
+def rgb_str(bgr_tuple):
+    if len(bgr_tuple)!=3:
+        return "N/A"
+    r=-1
+    g=-1
+    b=-1
+    try:
+        r=int(bgr_tuple[2])
+        g=int(bgr_tuple[1])
+        b=int(bgr_tuple[0])
+    except:
+        return "N/A"
+    return str(r)+","+str(g)+","+str(b)
+
 print("Labels to Images - labels2images.py")
 print("(C) Kim Miikki 2021\n")
 
@@ -220,7 +253,7 @@ if pathlib.Path(ts_file).exists():
     isTS=True
 if pathlib.Path(pts_file).exists():
     isPTS=True
-if isTS and isPTS:
+if isTS or isPTS:
     isInterval=False
 
 isInterval=inputYesNo("Interval","Enable interval mode",isInterval)
@@ -281,6 +314,7 @@ if isInterval:
     max_interval=files
     while interval<=0:
         interval=float(input("Interval between two frames: "))
+    decimals_time=inputValue("decimals",0,max_decimals,decimals_time,"","Decimals is out of range!",True)
     intervalUpdate=inputValue("update interval:",1,max_interval,1,"","Interval is out of range!",True)
     
     isInt=False
@@ -304,17 +338,17 @@ if isInterval:
     sample=text_prefix+getTimeStr(start,interval,files,isInt)
     if len(unit)>0:
         sample+=" "+unit
-    text=sample
-    text_width,text_height=getTextInfo(text,font,text_scale)
-    text_x,text_y,rect_x0,rect_y0,rect_x1,rect_y1=TextPosition("interval label",
-                                                               width,
-                                                               height,
-                                                               hspace,
-                                                               vspace,
-                                                               text_width,
-                                                               text_height,
-                                                               marginal_x,
-                                                               marginal_y)
+    int_text=sample
+    text_width,text_height=getTextInfo(int_text,font,text_scale)
+    text_x,text_y,rect_x0,rect_y0,rect_x1,rect_y1,pos_i=TextPosition("interval label",
+                                                                       width,
+                                                                       height,
+                                                                       hspace,
+                                                                       vspace,
+                                                                       text_width,
+                                                                       text_height,
+                                                                       marginal_x,
+                                                                       marginal_y)
 if isTS:
     print("")
     print("TS mode")
@@ -377,17 +411,17 @@ if isTS:
             except:
                 tsAlphaText=False
     # Create sample string with maximum length
-    text=sample
-    text_width,text_height=getTextInfo(text,font,ts_text_scale)
-    ts_text_x,ts_text_y,ts_rect_x0,ts_rect_y0,ts_rect_x1,ts_rect_y1=TextPosition("text",
-                                                                                 width,
-                                                                                 height,
-                                                                                 ts_hspace,
-                                                                                 ts_vspace,
-                                                                                 text_width,
-                                                                                 text_height,
-                                                                                 ts_marginal_x,
-                                                                                 ts_marginal_y)    
+    ts_sample=sample
+    ts_text_width,ts_text_height=getTextInfo(ts_sample,font,ts_text_scale)
+    ts_text_x,ts_text_y,ts_rect_x0,ts_rect_y0,ts_rect_x1,ts_rect_y1,pos_ts=TextPosition("text",
+                                                                                         width,
+                                                                                         height,
+                                                                                         ts_hspace,
+                                                                                         ts_vspace,
+                                                                                         ts_text_width,
+                                                                                         ts_text_height,
+                                                                                         ts_marginal_x,
+                                                                                         ts_marginal_y)    
     
 if isPTS:
     print("")
@@ -454,7 +488,7 @@ if isPTS:
             pts_divisor=divisors[units.index(pts_unit)]
             print("Divisor: "+str(pts_divisor))
             print("Maximum value: "+str(t/pts_divisor))
-        pts_decimals=inputValue("decimals",0,10,pts_decimals,"","Decimals is out of range!",True)
+        pts_decimals=inputValue("decimals",0,max_decimals,pts_decimals,"","Decimals is out of range!",True)
         pts_intervalUpdate=inputValue("update PTS interval:",1,files,1,"","Interval is out of range!",True)
         visibleUnit=inputYesNo("visible unit","Show unit",True)
         pts_prefix=input("PTS prefix: ")
@@ -480,17 +514,17 @@ if isPTS:
                 tmp+=" "+pts_unit
             pts_texts.append(tmp)
             # Create sample string with maximum length
-        text=pts_texts[last]
-        text_width,text_height=getTextInfo(text,font,pts_text_scale)
-        pts_text_x,pts_text_y,pts_rect_x0,pts_rect_y0,pts_rect_x1,pts_rect_y1=TextPosition("PTS text",
+        pts_sample=pts_texts[last]
+        pts_text_width,pts_text_height=getTextInfo(pts_sample,font,pts_text_scale)
+        pts_text_x,pts_text_y,pts_rect_x0,pts_rect_y0,pts_rect_x1,pts_rect_y1,pos_pts=TextPosition("PTS text",
                                                                                      width,
                                                                                      height,
-                                                                                     ts_hspace,
-                                                                                     ts_vspace,
-                                                                                     text_width,
-                                                                                     text_height,
-                                                                                     ts_marginal_x,
-                                                                                     ts_marginal_y)    
+                                                                                     pts_hspace,
+                                                                                     pts_vspace,
+                                                                                     pts_text_width,
+                                                                                     pts_text_height,
+                                                                                     pts_marginal_x,
+                                                                                     pts_marginal_y)    
     else:
         print("No PTS data found!")
         
@@ -500,7 +534,108 @@ if numSeries>1:
    if isCommonAlpha:
        common_alpha=inputValue("common alpha",0.0,1.0,common_alpha,"","Alpha is out of range!",False)
    print("")
-   
+
+# Create a log file
+file=open("labels2images.log","w")
+file.write("labels2images\n\n")
+file.write("Source directory: "+curdir+"\n")
+file.write("Master directory: "+dst[:-1]+"\n\n")
+
+file.write("Info\n")
+file.write("----\n")
+file.write("Files    : "+str(files)+"\n")
+file.write("\n")
+
+file.write("Options\n")
+file.write("-------\n")
+file.write("Extension   : "+ext+"\n")
+file.write(option_str("Common alpha",isCommonAlpha))
+if isCommonAlpha:
+    file.write("Common alpha value: "+str(common_alpha)+"\n")    
+file.write("\n")
+
+if isInterval:
+    file.write("Interval mode\n")
+    file.write("-------------\n")
+    file.write("Unit      : "+unit+"\n")
+    file.write("Start time: "+str(start)+"\n")
+    file.write("Interval  : "+str(interval)+"\n")
+    file.write("Update interval: "+str(intervalUpdate)+"\n")
+    file.write("Decimals  : "+str(decimals_time)+"\n")
+    file.write("\n")
+    file.write("Position   : "+positions[pos_i]+"\n")
+    file.write("Text width : "+str(text_width)+"\n")
+    file.write("Text height: "+str(text_height)+"\n")
+    file.write("X marginal : "+str(marginal_x)+"\n")
+    file.write("Y marginal : "+str(marginal_y)+"\n")
+    file.write("H space    : "+str(hspace)+"\n")
+    file.write("V space    : "+str(vspace)+"\n")
+    file.write("Text scale : "+str(text_scale)+"\n")
+    file.write("Text color : "+rgb_str(text_color)+"\n")
+    file.write("Rect color : "+rgb_str(rect_color)+"\n")
+    file.write("Rect alpha : "+str(rect_alpha)+"\n")
+    file.write("Rect x0    : "+str(rect_x0)+"\n")
+    file.write("Rect y0    : "+str(rect_y0)+"\n")
+    file.write("Rect x1    : "+str(rect_x1)+"\n")
+    file.write("Rect y1    : "+str(rect_y1)+"\n")
+    file.write("\n")
+    file.write(option_str("Alpha text ",alphaText))
+    file.write("Sample text: "+int_text+"\n")
+    file.write("\n")
+
+if isTS:
+    file.write("Interval mode\n")
+    file.write("-------------\n")
+    file.write("Position   : "+positions[pos_ts]+"\n")
+    file.write("Text width : "+str(ts_text_width)+"\n")
+    file.write("Text height: "+str(ts_text_height)+"\n")
+    file.write("X marginal : "+str(ts_marginal_x)+"\n")
+    file.write("Y marginal : "+str(ts_marginal_y)+"\n")
+    file.write("H space    : "+str(ts_hspace)+"\n")
+    file.write("V space    : "+str(ts_vspace)+"\n")
+    file.write("Text scale : "+str(ts_text_scale)+"\n")
+    file.write("Text color : "+rgb_str(ts_text_color)+"\n")
+    file.write("Rect color : "+rgb_str(ts_rect_color)+"\n")
+    file.write("Rect alpha : "+str(ts_rect_alpha)+"\n")
+    file.write("Rect x0    : "+str(ts_rect_x0)+"\n")
+    file.write("Rect y0    : "+str(ts_rect_y0)+"\n")
+    file.write("Rect x1    : "+str(ts_rect_x1)+"\n")
+    file.write("Rect y1    : "+str(ts_rect_y1)+"\n")
+    file.write("\n")
+    file.write(option_str("Alpha text ",tsAlphaText))
+    file.write("Sample text: "+ts_sample+"\n")
+    file.write("\n")
+
+if isPTS:
+    file.write("PTS mode\n")
+    file.write("-------------\n")
+    file.write("Unit      : "+pts_unit+"\n")
+    file.write("Update interval: "+str(pts_intervalUpdate)+"\n")
+    file.write("Decimals  : "+str(pts_decimals)+"\n")
+    file.write("\n")
+    file.write("Position   : "+positions[pos_pts]+"\n")
+    file.write("Text width : "+str(pts_text_width)+"\n")
+    file.write("Text height: "+str(pts_text_height)+"\n")
+    file.write("X marginal : "+str(pts_marginal_x)+"\n")
+    file.write("Y marginal : "+str(pts_marginal_y)+"\n")
+    file.write("H space    : "+str(pts_hspace)+"\n")
+    file.write("V space    : "+str(pts_vspace)+"\n")
+    file.write("Text scale : "+str(pts_text_scale)+"\n")
+    file.write("Text color : "+rgb_str(pts_text_color)+"\n")
+    file.write("Rect color : "+rgb_str(pts_rect_color)+"\n")
+    file.write("Rect alpha : "+str(pts_rect_alpha)+"\n")
+    file.write("Rect x0    : "+str(pts_rect_x0)+"\n")
+    file.write("Rect y0    : "+str(pts_rect_y0)+"\n")
+    file.write("Rect x1    : "+str(pts_rect_x1)+"\n")
+    file.write("Rect y1    : "+str(pts_rect_y1)+"\n")
+    file.write("\n")
+    file.write("Prefix     : "+str(pts_prefix)+"\n")
+    file.write(option_str("Visible unit",visibleUnit))
+    file.write(option_str("Alpha text ",ptsAlphaText))
+    file.write("Sample text: "+pts_sample+"\n")
+    file.write("\n")
+
+t1=datetime.now()   
 i=0
 ts_line=0
 pts_line=0
@@ -593,3 +728,9 @@ for p in sorted(path.iterdir()):
         cv2.imwrite(tmp,frame_overlay)
         i+=1
 cv2.destroyAllWindows()
+t2=datetime.now()
+
+file.write("Time elapsed: "+str(t2-t1)+"\n")
+file.close()
+print("")
+print("Time elapsed: "+str(t2-t1))
