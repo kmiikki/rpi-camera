@@ -34,7 +34,7 @@ def inputYesNo(name,question,default=True):
     else:
         return False
 
-def inputListValue(name,listValues=[],default=-1,listErrorText="Not a valid value!",strType=False):
+def inputListValue(name,listValues=[],default=-1,listErrorText="Not a valid value!",strType=False,strUpper=False):
     if not default in listValues:
         print("\nDefault value "+str(default)+" not in:")
         print(str(listValues))
@@ -52,6 +52,8 @@ def inputListValue(name,listValues=[],default=-1,listErrorText="Not a valid valu
         try:
             tmp=input("Select "+name+" ("+list_str+"Default="+str(default)+"): ")
             if strType:
+                if strUpper:
+                    tmp=tmp.upper()
                 value=tmp
             else:
                 value=int(tmp)
