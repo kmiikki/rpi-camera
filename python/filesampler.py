@@ -24,7 +24,6 @@ isFilter=False
 isBareNumber=False
 isConsequentNumbering=False
 isDigits=False
-isLog=True
 fname=""
 stem=""
 numinverse=0

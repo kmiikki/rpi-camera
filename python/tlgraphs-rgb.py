@@ -166,28 +166,34 @@ path=Path(curdir)
 print("")
 print("Current directory:")
 print(curdir)
+print("")
 
 try:
-  if not os.path.exists(outdir):
-    os.mkdir(outdir)
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
 except OSError:
-  print("Unable to create a directory or directories under following path:\n"+curdir)
-  print("Program is terminated.")
-  print("")
-  sys.exit(1)
+    print("Unable to create a directory or directories under following path:\n"+curdir)
+    print("Program is terminated.")
+    print("")
+    sys.exit(1)
 
-# Count rows
-with open(rgbname) as fp:
-    line=0
-    for row in fp:
-        row=row.strip()
-        if len(row)==0:
-            continue
-        if line==0:
-            pass
-        else:
-            data_lines+=1
-        line+=1
+# Count rgb.csv data lines
+try:
+    with open(rgbname) as fp:
+        line=0
+        for row in fp:
+            row=row.strip()
+            if len(row)==0:
+                continue
+            if line>0:
+                data_lines+=1
+            line+=1
+except:
+    print("Unable to open: "+rgbname)
+    print("Program is terminated.")
+    print("")
+    sys.exit(0)
+    
 
 interval_data=inputValue("data interval:",1,data_lines,interval_data,"","Interval is out of range!",True)    
 
@@ -213,6 +219,7 @@ if len(lines)==0:
     sys.exit(0)
     
 if headers[1]=="number":
+    xaxis_label="Image"
     time_mode=False
 else:
     time_mode=True
@@ -240,11 +247,11 @@ else:
         xaxis_label=input("Custom x-axis label: ")
         if len(xaxis_label)==0:
             visLabelX=False
-    isAuto=inputYesNo("auto label","Accept auto label '"+xaxis_label+"'",True)
-    if not isAuto:
-        xaxis_label=input("Custom x-axis label: ")
-        if len(yaxis_label)==0:
-            visLabelX=False
+isAuto=inputYesNo("auto label","Accept x-axis auto label '"+xaxis_label+"'",True)
+if not isAuto:
+    xaxis_label=input("Custom x-axis label: ")
+    if len(yaxis_label)==0:
+        visLabelX=False
 
 
 # Minium and maximum values for all series
@@ -279,9 +286,9 @@ for col in range(2,6):
         bymax=maxy
         
 # Plot Selection
-plot_selections=["RGB","BW","custom"]
+plot_selections=["RGB","BW","CUSTOM"]
 selected_plotsbrackets=inputListValue("plot type",plot_selections,
-                                      "custom","Not a valid selection",True)
+                                      "CUSTOM","Not a valid selection",True,True)
 if selected_plotsbrackets=="RGB":
     isR=True
     isG=True
@@ -327,7 +334,7 @@ if True in [isBW,isR,isG,isB]:
             yaxis_label="Green channel mean value"
         elif isB:
             yaxis_label="Blue channel mean value"
-    isAuto=inputYesNo("auto label","Accept auto label '"+yaxis_label+"'",True)
+    isAuto=inputYesNo("auto label","Accept y-axis auto label '"+yaxis_label+"'",True)
     if not isAuto:
         yaxis_label=input("Custom y-axis label: ")
         if len(yaxis_label)==0:
@@ -444,15 +451,11 @@ if True in [isBW,isR,isG,isB]:
         fig.set_size_inches(wi,hi)
         fig.set_size_inches(hi*(w/h),hi)
 
-        if not time_mode:
-            ax = plt.figure().gca()
-            ax.xaxis.get_major_locator().set_params(integer=True)
         plt.xlim(xmin,xmax)
         plt.ylim(ymin,ymax)
         if visLabelX:
-            
             plt.xlabel(xaxis_label,fontsize=font_size)
-        if visLabelX:
+        if visLabelY:
             plt.ylabel(yaxis_label,fontsize=font_size)
         # Plot data
         if isBW:
@@ -476,10 +479,10 @@ if True in [isBW,isR,isG,isB]:
         plt.savefig(tmp,dpi=h/hi)
         plt.close()
         
-t2=datetime.now()
-file.write("\n")
-file.write("Lines processed: "+str(i)+"\n")
-file.write("Time elapsed: "+str(t2-t1)+"\n")
-file.close()
-print("")
-print("Time elapsed: "+str(t2-t1))
+    t2=datetime.now()
+    file.write("\n")
+    file.write("Lines processed: "+str(i)+"\n")
+    file.write("Time elapsed: "+str(t2-t1)+"\n")
+    file.close()
+    print("")
+    print("Time elapsed: "+str(t2-t1))
