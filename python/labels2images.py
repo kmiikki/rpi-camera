@@ -428,16 +428,32 @@ if isPTS:
     print("PTS mode")
     print("--------")
     # Read PTS values and options
-    i=0
     var_lines=4
     var_list=[]
     var_names=[]
     sample=""
-    with open(pts_file) as fp:
-        for line in fp:
-            line=line.strip()
-            if len(line)>0:
-                pts_values.append(float(line))
+    i=0
+    try:
+        with open(pts_file) as fp:
+            for line in fp:
+                i+=1
+                line=line.strip()
+                if i==1:
+                    try:
+                        float(line)
+                    except:
+                        # Header line skipped
+                        continue
+                if len(line)>0:
+                    try:
+                        pts_values.append(float(line))
+                    except:
+                        continue
+    except:
+        print("Unable to open "+pts_file)
+        print("The program is terminated.")
+        sys.exit(0)
+    i=0
     if pathlib.Path(timelabels_ts).exists():
         with open(timelabels_ts) as fp:
             for line in fp:
