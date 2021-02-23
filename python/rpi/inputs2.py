@@ -36,10 +36,11 @@ def inputYesNo(name,question,default=True):
 
 def inputListValue(name,listValues=[],default=-1,listErrorText="Not a valid value!",strType=False,strUpper=False):
     if not default in listValues:
+        import sys
         print("\nDefault value "+str(default)+" not in:")
         print(str(listValues))
         print("The program is terminated!")
-        exit(1)
+        sys.exit(1)
     list_str=""
     for i in range(len(listValues)):
         list_str+=str(listValues[i])

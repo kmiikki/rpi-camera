@@ -72,7 +72,7 @@ def get_label_u(text,brackets):
             label+="["+unit+"]"
     return label
 
-outfile="xydata.txt"
+outfile="xydata.csv"
 xlabel=""
 ylabel=""
 ptslabel="Time"
