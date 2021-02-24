@@ -92,11 +92,13 @@ path=Path(curdir)
 print("")
 print("Current directory:")
 print(curdir)
-brackets=inputListValue("bracket type",bracket_type,brackets,"Not valid brackets",True)
 print("")
 
 a=sys.argv
 args=len(a)
+out=None
+in1=None
+in2=None
 if args!=3:
     errors.append("Incorrect number of arguments")
 else:
@@ -106,25 +108,27 @@ else:
         in1=open(a[1],"r")
         xs=in1.readlines()
     except:
-        errors.append("Unable to open "+a[1])
+        errors.append("Unable to open file: "+a[1])
     try:
         in2=open(a[2],"r")
         ys=in2.readlines()
     except:
-        errors.append("Unable to open "+a[2])
+        errors.append("Unable to open file: "+a[2])
     try:
         out=open(outfile,"w")
     except:
         errors.append("Unable to open "+outfile)
 
-if len(xs)<2:
-    errors.append("At least two x rows are required (header + x1)")
+if len(xs)<2 and in1 is not None:
+    errors.append("File 1: At least two x rows are required (header + x1)")
 if len(ys)>len(xs):
     errors.append("Data y rows > x rows")
-if len(ys)<2:
-    errors.append("At least two y rows are required (header + y1)")
+if len(ys)<2 and in2 is not None:
+    errors.append("File 2: At least two y rows are required (header + y1)")
 
 if len(errors)==0 and len(xs)>1:
+    brackets=inputListValue("bracket type",bracket_type,brackets,"Not valid brackets",True)
+    print("")
     i=0
     j=0
     for x in xs:
@@ -157,6 +161,9 @@ if len(errors)>0:
     for row in errors:
         print(row)
 
-out.close()
-in2.close()
-in1.close()
+if out is not None:
+    out.close()
+if in2 is not None:
+    in2.close()
+if in1 is not None:
+    in1.close()
