@@ -23,7 +23,7 @@ ext=".jpg"
 
 parser=argparse.ArgumentParser()
 parser.add_argument("file", type=pathlib.Path, help="video file")
-parser.add_argument("-png", action="store_true", help="extract frams to PNG format")
+parser.add_argument("-png", action="store_true", help="extract frames to PNG format")
 args = parser.parse_args()
 
 if args.png:
