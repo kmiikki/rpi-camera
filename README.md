@@ -2,7 +2,7 @@
 Raspberry Pi High Speed Camera Software Suite
 
 Open source software for general and special photography:
-- time-lase, camera, video recorder including high speed videos
+- time-lapse, camera, video recorder including high speed videos
 - composition, exposure, ROI, focusing tools, color calibration
 - color analysis
 - batch tools: RGB channel splitting and combination, levels, crop etc.
