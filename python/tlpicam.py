@@ -18,20 +18,27 @@ dropfile="__drop.jpg"
 logfile="tlpicam.log"
 ext=".jpg"
 
+def swap(a,b):
+    return b,a
+
 def time_and_unit(minimum,maximum):
     if minimum>maximum:
         minimum,maximum=swap(minimum,maximum)
-    unit="min"
-    q=minimum // 60
+    unit="s"
     divisor=1
+    q=minimum // 60
+    if q>=1:
+        unit="min"
+        divisor*=60
+    q=minimum // (60*60)
     if q>=1:
         unit="h"
         divisor*=60
-    q=minimum // (60*24)
+    q=minimum // (60*60*24)
     if q>=1:
         unit="d"
         divisor*=24
-    q=minimum // (60*24*365.2425)
+    q=minimum // (60*60*24*365.2425)
     if q>=1:
         unit="a"
         divisor*=365.2425
@@ -48,6 +55,8 @@ def time_and_unit(minimum,maximum):
 print("PiCamera based time-lapse program ver. 1.0")
 print("")
 
+time_and_unit(60,60)
+
 # Get current directory
 curdir=os.getcwd()
 path=Path(curdir)
@@ -61,6 +70,9 @@ print("")
 exposure=1
 minutes_min=1
 minutes_max=525950
+minutes_on=True
+s_min=4
+s_max=int(60*minutes_max)
 red_gain_min=0.1
 red_gain_max=10.0
 blue_gain_min=0.1
@@ -98,6 +110,14 @@ if not awb_on:
     awbg_red=inputValue("red gain",1.0,8.0,awbg_red_default,"","Value out of range!",False)
     awbg_blue=inputValue("blue gain",1.0,8.0,awbg_blue_default,"","Value out of range!",False)
 
+print("")
+jpg_mode=inputYesNo("jpg mode","Image format JPG",True)
+print("")
+if jpg_mode:
+    ext=".jpg"
+else:
+    ext=".png"
+
 # Digits
 digits_default=4
 min_digits=1
@@ -108,10 +128,21 @@ digits=inputValue("digits",min_digits,max_digits,digits_default,"","Digits is ou
 max_count=int(10**digits-1)
 
 # Intervals
-interval_min=inputValue("interval",minutes_min,minutes_max,minutes_min,"min","Interval is out of range!",True)
-time_min=int(((10**digits-1)-2)*interval_min)
-time_max=int(((10**digits-1)-1)*interval_min)
-t_min,t_max,u=time_and_unit(time_min,time_max)
+# PNG capture speed is slow => Enable only JPG capturing in s mode
+if jpg_mode:
+    minutes_default=True
+    minutes_on=inputYesNo("Interval in minutes mode","Select minute mode",minutes_default)
+else:
+    minutes_on=True
+if minutes_on:
+    interval_min=inputValue("interval",minutes_min,minutes_max,minutes_min,"min","Interval is out of range!",True)
+    interval_s=interval_min*60
+else:
+    interval_s=inputValue("interval",s_min,s_max,s_min,"s","Interval is out of range!",True)
+    interval_min=interval_s/60
+t_mins=((10**digits-1)-2)*interval_s
+t_maxs=((10**digits-1)-1)*interval_s
+t_min,t_max,u=time_and_unit(t_mins,t_maxs)
 t_str=str(t_max)+" "+u
 print("Time-lapse maximum duration: "+t_str)
 print("")
@@ -132,7 +163,7 @@ if startTL:
         camera.exposure_mode="auto"
     else:
         camera.exposure_mode="off"
-        camera.shutter_speed=100000
+        camera.shutter_speed=exposure
     sleep(2)
     if awb_on:
         camera.awb_mode="auto"
@@ -160,7 +191,7 @@ if startTL:
     # Discard the first image to stabilize the capture stream
     camera.capture(dropfile)
     os.remove(dropfile)
-    sleep(2)    
+    sleep(5)    
 
     # Create a log file
     file=open(logfile,"w")
@@ -183,14 +214,22 @@ if startTL:
         file.write("off\n")
         file.write("Red gain : "+str(awbg_red)+"\n")
         file.write("Blue gain: "+str(awbg_blue)+"\n")
-    file.write("Digits: "+str(digits)+"\n")
-    file.write("Interval: "+str(interval_min)+"\n")
+    file.write("Digits  : "+str(digits)+"\n")
+    if minutes_on:
+        interval=interval_min
+        unit="min"
+    else:
+        interval=interval_s
+        unit="s"
+    file.write("Mode    : "+unit+"\n")
+    file.write("Interval: "+str(interval)+" "+unit+"\n")
     file.write("Time-lapse maximum duration: "+t_str+"\n")
     file.write("Extension: "+ext+"\n")
     file.close()
     
     try:
-        for filename in camera.capture_continuous("{counter:0"+str(digits)+"d}.jpg"):
+        t1=datetime.now()
+        for filename in camera.capture_continuous("{counter:0"+str(digits)+"d}"+ext):
             i+=1
             t2=datetime.now()
             capture_time=(t2-t1).total_seconds()
@@ -205,5 +244,5 @@ if startTL:
         pass        
     camera.close()
 else:
-    print("Time-lapse cancelled.")
+    print("Time-lapse canceled.")
     
