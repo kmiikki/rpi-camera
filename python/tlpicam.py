@@ -71,7 +71,7 @@ exposure=1
 minutes_min=1
 minutes_max=525950
 minutes_on=True
-s_min=5
+s_min=2
 s_max=int(60*minutes_max)
 red_gain_min=0.1
 red_gain_max=10.0
@@ -228,12 +228,13 @@ if startTL:
     file.close()
     
     lags=[]
+    tl_start=datetime.now()
     try:
-        t1=datetime.now()
+        t0=datetime.now()
         for filename in camera.capture_continuous("{counter:0"+str(digits)+"d}"+ext,quality=quality):
             i+=1
-            t2=datetime.now()
-            capture_time=(t2-t1).total_seconds()
+            t1=datetime.now()
+            capture_time=(t1-(t0+timedelta(minutes=(i-1)*interval_min))).total_seconds()
             delay=float(interval_min*60-capture_time)
             print(str(i).zfill(digits)+"/"+str(max_count),end="")
             if delay<0:
@@ -243,21 +244,37 @@ if startTL:
                 print()
             if i>=max_count:
                 break
-            #print(t1,t2,capture_time,delay)
             if delay>0:
                 sleep(delay)
-            t1=datetime.now()
     except KeyboardInterrupt: # Press Ctrl+C to interrupt
+        print("\nTime-lapse shooting exited.")
+    else:
+        print("\nTime-lapse shooting finished.")
+    finally:
+        tl_end=datetime.now()
+        print("Time-lapse started : "+str(tl_start))
+        print("Time-lapse ended   : "+str(tl_end))
+        print("Time-lapse duration: "+str(tl_end-tl_start)+"\n")
+        print("Frames captured: "+str(i))
+        if len(lags)>0:
+            print("Frames delayed : "+str(len(lags))+"\n")
+            print("Delayed frames:")
+            for s in lags:
+                print(str(s[0]).zfill(digits)+": "+format(round(abs(s[1]),3),".3f")+" s")
         file=open(logfile,"a+")
         file.write("\n")
         file.write("----\n\n")
-        file.write("Frames captured: "+str(i)+"\n\n")
+        file.write("Time-lapse started : "+str(tl_start)+"\n")
+        file.write("Time-lapse ended   : "+str(tl_end)+"\n")
+        file.write("Time-lapse duration: "+str(tl_end-tl_start)+"\n")
+        file.write("\n")
+        file.write("Frames captured: "+str(i)+"\n")
         if len(lags)>0:
-            file.write("Frames delayed : "+str(len(lags))+"\n")
+            file.write("Frames delayed : "+str(len(lags))+"\n\n")
+            file.write("Delayed frames:\n")
             for s in lags:
                 file.write(str(s[0]).zfill(digits)+": "+format(round(abs(s[1]),3),".3f")+" s\n")
-        file.close()        
+        file.close()
     camera.close()
 else:
     print("Time-lapse canceled.")
-    
