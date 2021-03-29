@@ -12,6 +12,6 @@ Open source software for general and special photography:
 
 Supported hardware: Raspberry Pi 3 and 4, HQ camera and version 2.x camera modules
 
-
+Please, cite us as Miikki, K; Karakoc, A. et al. An open-source camera system for experimental measurements, SoftwareX, 2021, 14, 100688 in your investigations, which can be freely accessed at https://www.sciencedirect.com/science/article/pii/S2352711021000339#appA
 
 <a href="https://doi.org/10.5281/zenodo.4300692"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.4300692.svg" alt="DOI"></a>
