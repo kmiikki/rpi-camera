@@ -1,30 +1,44 @@
 #!/usr/bin/python3
-# Calibrate Raspberry Pi camera v. 2.x fast (c) Kim Miikki and Alp Karakoc 2020
+# Calibrate Raspberry Pi camera v. 2.x and HQ camera
+# (c) Kim Miikki and Alp Karakoc 2021
+# Version: 2.0
+
 import os
+import shutil
 import time
 from datetime import datetime
 from pathlib import Path
+from time import sleep
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
-from rpi.inputs import *
+from picamera import PiCamera
+from rpi.inputs2 import *
 from rpi.camerainfo import *
+from rpi.roi import *
+
+pip=(0,0,640,480)
+pw=640
+ph=480
+ext=".jpg"
 
 expss=0
 
 # Uncomment to overide gain ranges
-#red_gain_min=3.0
-#red_gain_max=4.0
-#blue_gain_min=1.0
-#blue_gain_max=2.0
+#red_gain_min=1.00
+#red_gain_max=1.15
+#blue_gain_min=0.15
+#blue_gain_max=0.20
 
 red_step=0.1
 blue_step=0.1
 
-roi_x0=0.1
-roi_y0=0
-roi_w=0.9
-roi_h=0.75
+roi_result=validate_roi_values()
+if not roi_result:
+    roi_x0=0.25
+    roi_y0=0.25
+    roi_w=0.5
+    roi_h=0.5
 
 # Uncomment for full field of view
 #roi_x0=0
@@ -228,32 +242,32 @@ artistfile="artist.txt"
 
 np.set_printoptions(suppress=True)
 
-if camera_detected==1:
-    analyzeOnly=inputYesNo("Analyze only mode","Calibration from existing files","N")
-else:
-    print("Raspberry Pi camera module not found!")  
-    analyzeOnly=inputYesNo("Analyze only mode","Calibration from existing files","Y")
-    if analyzeOnly=="n":
-        print("Calibration of existing files is only allowed without a camera module. Program is terminated.")
-        exit(0)
-if analyzeOnly=="n":
-    quality=inputValue("quality",1,100,quality_default,"","Quality is out of range!",True)
-else:
-    quality=quality_default
-print("\nList disk and partitions:")
-os.system('lsblk')
-print("\nCurrent directory:")
-os.system("pwd")
+print("Current directory:")
+curdir=os.getcwd()
+print(curdir)
 path=input('\nPath to images (current directory: <Enter>): ')
-name=input('Calibration name: ')
+name=input('Calibration name (Default: '+default_calibration_name+'): ')
 if name=="":
     name=default_calibration_name
     print("Default calibration name assigned: "+name)
 
+if camera_detected==1:
+    analyzeOnly=inputYesNo("Analyze only mode","Calibration from existing files",False)
+else:
+    print("Raspberry Pi camera module not found!")  
+    analyzeOnly=inputYesNo("Analyze only mode","Calibration from existing files",True)
+    if not analyzeOnly:
+        print("Calibration of existing files is only allowed, without a camera module. Program is terminated.")
+        exit(0)
+if not analyzeOnly:
+    quality=inputValue("quality",1,100,quality_default,"","Quality is out of range!",True)
+else:
+    quality=quality_default
+
 iso=100
 iso_default=100
 iso_modes=[100,200,320,400,500,640,800]
-if analyzeOnly=="n":
+if not analyzeOnly:
     iso=inputListValue("ISO",iso_modes,iso_default,"Not a valid ISO value!")
     w=camera_maxx
     h=camera_maxy
@@ -289,7 +303,7 @@ if analyzeOnly=="n":
     print("")
 
 # Selection of the calibration mode
-if analyzeOnly=="n":
+if not analyzeOnly:
     md=[]
     md.append(["1",len(exp_fast),exp_fast[0],exp_fast[len(exp_fast)-1]])
     md.append(["2",len(exp_medium1),exp_medium1[0],exp_medium1[len(exp_medium1)-1]])
@@ -334,7 +348,7 @@ if analyzeOnly=="n":
     min_x=exposure[0]
     max_x=exposure[len(exposure)-1]
 
-if analyzeOnly=="n":
+if not analyzeOnly:
     print("\nDefault calibration ranges:")
     print("Red gain range:  "+str(red_gain_min)+"-"+str(red_gain_max))
     print("Red gain step:   "+str(red_step))
@@ -389,26 +403,32 @@ if analyzeOnly=="n":
     blue_format="{:"+"."+str(blue_decimals)+"f}"
     
 scale_type=inputListValue("scale type",["linear","log"],"linear","Not a valid scale type!",True)
+if not analyzeOnly:
+    previewImage=inputYesNo("Preview","Preview image",True)
 
-try:
-    f=open(artistfile,"r")
-    artist=f.readline()
-    artist=artist.strip()
-    print("Artist: "+artist)
-    f.close()
-except IOError:
-    artist=""
+    try:
+        f=open(artistfile,"r")
+        artist=f.readline()
+        artist=artist.strip()
+        print("")
+        print("Artist: "+artist)
+        f.close()
+    except IOError:
+        artist=""
 
 # Create a log file
 logname=""
 if (path!=""):
     logname=path+"/"
-if analyzeOnly=="n":
+if not analyzeOnly:
     logname+=name+"_iso"+str(iso)+".log"
 else:
     logname+=name+"_analyze_mode.log"
 now = datetime.now()
+
+# Start time
 t1=now
+
 dt_string = now.strftime("%Y.%m.%d-%H:%M:%S")
 
 file=open(logname,"w")
@@ -419,7 +439,7 @@ else:
     file.write("File path: Not defined\n\n")
 file.write("Calibration name: "+name+"\n\n")
 
-if analyzeOnly=="n":
+if not analyzeOnly:
     file.write("Calibration parameters:\n")
     if camera_detected==1:
         file.write("Resolution: "+str(camera_maxx)+"x"+str(camera_maxy)+"\n")
@@ -441,20 +461,11 @@ if analyzeOnly=="n":
 
 file.write("Scale type: "+scale_type+"\n")
 file.write("Analyze only mode: ")
-if analyzeOnly=="y":
+if analyzeOnly:
     file.write("Enabled")
 else:
     file.write("Disabled")
 file.write("\n")
-
-if analyzeOnly=="n":
-    file.write("\nShoot commands:\n\n")
-    file.write("\n")
-# Genereate file names and shoot commands
-# Templates:
-#
-# raspistill -n -t 1 -w 640 -h 480 -ISO 100 -q 90 -ss 020000 -ex off -awb off -dg 1 -awbg 2.0,1.0 -roi 0.4,0.43,0.19,0.13 -o test_2.0,1.0/test_iso100_awbg_2.0,1.0_020000.jpg
-# raspistill -t 0 -ss 5000 -ex off -awb off -awbg 1.7,1.7 -roi 0.4,0.43,0.19,0.13
 
 i=0
 r=red_gain_min
@@ -462,55 +473,108 @@ subdirs=[]
 subdirs_count=0
 
 # Capture pictures
-if analyzeOnly=="n":
-    while (r<red_gain_max+red_step/2):
-        b=blue_gain_min
-        while b<blue_gain_max+blue_step/2:
-            i=0
-            r_tmp=round(r*1e6)/1e6
-            b_tmp=round(b*1e6)/1e6
-            r_str=red_format.format(r_tmp)
-            b_str=blue_format.format(b_tmp)
-            subdir=name+"_"+r_str+","+b_str
-            if (path!=""):
-                subdir=path+"/"+subdir
+if not analyzeOnly:
+    reds=int((red_gain_max-red_gain_min+red_step)/red_step)
+    blues=int((blue_gain_max-blue_gain_min+blue_step)/blue_step)
+    combinations=reds*blues
+    pictures=combinations*len(exposure)
+    digits=len(str(pictures))
+    
+    # Create ared gains array
+    i=0
+    red_gains=[]
+    while i<reds:
+        red_gains.append(round(red_gain_min+i*red_step,10))
+        i+=1
+        
+    # Create a blue gains array
+    i=0
+    blue_gains=[]
+    while i<blues:
+        blue_gains.append(round(blue_gain_min+i*blue_step,10))
+        i+=1
+
+    camera=PiCamera(resolution=(pw,ph))
+    camera.iso=iso
+    camera.framerate=1
+    camera.exposure_mode="off"
+    camera.awb_mode="off"
+    zoom=(roi_x0,roi_y0,roi_w,roi_h)
+    camera.zoom=zoom
+    
+    if previewImage:
+        camera.start_preview(fullscreen=False,window=pip)
+        sleep(2)
+    i=0
+    rindex=0
+    bindex=0
+    expindex=0
+    r=red_gains[rindex]
+    b=blue_gains[bindex]
+    e=exposure[expindex]
+    camera.shutter_speed=e
+    camera.awb_gains=(r,b)
+    sleep(2)
+    newCombination=True
+    if artist!="":
+        camera.exif_tags["IFD0.Artist"]=artist
+        camera.exif_tags["IFD0.Copyright"]=artist
+    print("")
+    print("Capturing calibration images:")
+    for filename in camera.capture_continuous("temp{counter:0"+str(digits)+"d}"+ext,quality=quality):        
+        i+=1
+        if i>pictures:
+            if os.path.isfile(filename):
+                os.remove(filename)
+            break
+
+        # Build the subdirectory string
+        r_tmp=round(r,10)
+        b_tmp=round(b,10)
+        r_str=red_format.format(r_tmp)
+        b_str=blue_format.format(b_tmp)
+        subdir=name+"_"+r_str+","+b_str
+        if (path!=""):
+            subdir=path+"/"+subdir
+        if newCombination:
             subdirs.append(subdir)
             subdirs_count+=1
-            if not os.path.exists(subdir):
+        if not os.path.exists(subdir):
+            os.mkdir(subdir)
+            newCombination=False
+        else:
+            if newCombination:
+                shutil.rmtree(subdir)
                 os.mkdir(subdir)
-            else:
-                print("\nSubdirectory already exists: "+subdir)
-                print("Program is terminated.")
-                exit(1)
-            for t in exposure:
-                timestr=str(exposure[i])
-                timestr=timestr.rjust(6,'0')
-                fname=name+"_iso"+str(iso)+"_"+r_str+","+b_str+"_"+timestr+".jpg"
-                filenames.append(fname)
-                tmp="raspistill -n -t 1 "
-                tmp+="-w 640 -h 480 "
-                tmp+="-ISO "+str(iso)+" "
-                tmp+="-q "
-                tmp+=str(quality)+" "
-                tmp+="-ss "+timestr+" "
-                tmp+="-ex off -awb off -dg 1 "
-                tmp+="-awbg "+str(r_tmp)+","+str(b_tmp)+" "
-                tmp+="-roi "+str(roi_x0)+","+str(roi_y0)+","+str(roi_w)+","+str(roi_h)+" "
-                if artist!="":
-                    tmp+='-x IFD0.Artist="'+artist+'" '
-                    tmp+='-x IFD0.Copyright="'+artist+'" '
-                tmp+="-o "+subdir+"/"+fname
-                shootcommand.append(tmp)
-                i=i+1
-            b+=blue_step
-        r+=red_step
+                newCombination=False
+            
+        # Build the picture name string
+        timestr=str(exposure[expindex])
+        timestr=timestr.rjust(6,'0')
+        fname=name+"_iso"+str(iso)+"_"+r_str+","+b_str+"_"+timestr+".jpg"
 
-    i=0
-    for picture in shootcommand:
-        print(picture)
-        os.system(picture)
-        file.write(picture+"\n")
-        i=i+1
+        shutil.move(filename,subdir+"/"+fname)
+        print(fname)
+        
+        expindex+=1
+        if expindex>=exposures:
+            expindex=0        
+            bindex+=1
+            newCombination=True
+            if bindex>=blues:
+                bindex=0
+                rindex+=1
+            if rindex>=reds:
+                break
+
+        r=red_gains[rindex]
+        b=blue_gains[bindex]
+        e=exposure[expindex]
+            
+        camera.shutter_speed=e
+        camera.awb_gains=(r,b)
+    camera.close()
+
 else:
     # List calibration directories
     dirpath=""
@@ -560,7 +624,7 @@ for d in subdirs:
     green=[]
     blue=[]
     dirpath=d
-    if analyzeOnly=="y":
+    if analyzeOnly:
         min_x=-1
         max_x=-1
         exposure=list()
@@ -587,7 +651,7 @@ for d in subdirs:
             green.append(g_avg)
             blue.append(b_avg)
             ss,red_gain,blue_gain=get_exp_awbg(fname)
-            if analyzeOnly=="y":
+            if analyzeOnly:
                 if (min_x==-1) and (max_x==-1):
                     min_x=ss
                     max_x=ss
