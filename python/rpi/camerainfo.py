@@ -2,12 +2,11 @@
 # (C) Kim Miikki 2020
 
 import subprocess
-from picamera import PiCamera
 
 sensor_megapixels_dict= {
-	#sensor: [megapixels,max_exposure]
-	"imx219": [8,10e6],
-	"imx477": [12.3,200e6]
+    #sensor: [megapixels,max_exposure]
+    "imx219": [8,10e6],
+    "imx477": [12.3,200e6]
 }
 
 board_model=""
@@ -63,34 +62,38 @@ def boardModel():
 board_model,board_model_ver=boardModel()
 
 # Detect if a camera module is present
-tmp=subprocess.check_output("vcgencmd get_camera",shell=True)
-tmp=tmp[:-1]
-# Result format: b'supported=1 detected=0\n'
-tmp=str(tmp).split("detected=")
-camera_detected=int(tmp[1][0])
+try:
+    tmp=subprocess.check_output("vcgencmd get_camera",shell=True)
+    tmp=tmp[:-1]
+    # Result format: b'supported=1 detected=0\n'
+    tmp=str(tmp).split("detected=")
+    camera_detected=int(tmp[1][0])
+except:
+    camera_detected=0
 
 if camera_detected==1:
-	camera=PiCamera()
-	camera_revision=camera.revision
-	camera_exif=camera.exif_tags
-	camera.close()
+    from picamera import PiCamera
+    camera=PiCamera()
+    camera_revision=camera.revision
+    camera_exif=camera.exif_tags
+    camera.close()
 
-	camera_model=camera_exif["IFD0.Model"]
-	camera_make=camera_exif["IFD0.Make"]
-	camera_maxres=str(camera.MAX_RESOLUTION)
-	resolution=camera_maxres.split("x")
+    camera_model=camera_exif["IFD0.Model"]
+    camera_make=camera_exif["IFD0.Make"]
+    camera_maxres=str(camera.MAX_RESOLUTION)
+    resolution=camera_maxres.split("x")
 else:
-	camera_revision="N/A"
-	camera_model="N/A"
-	camera_make="N/A"
-	camera_maxres="-1x-1"
-	resolution=camera_maxres.split("x")
+    camera_revision="N/A"
+    camera_model="N/A"
+    camera_make="N/A"
+    camera_maxres="-1x-1"
+    resolution=camera_maxres.split("x")
 camera_maxx=int(resolution[0])
 camera_maxy=int(resolution[1])
 
 try:
-	camera_megapixels=sensor_megapixels_dict[camera_revision][0]
-	camera_max_exposure=int(sensor_megapixels_dict[camera_revision][1])
+    camera_megapixels=sensor_megapixels_dict[camera_revision][0]
+    camera_max_exposure=int(sensor_megapixels_dict[camera_revision][1])
 except:
 	camera_megapixels=-1
 	

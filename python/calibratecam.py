@@ -12,7 +12,6 @@ from time import sleep
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
-from picamera import PiCamera
 from rpi.inputs2 import *
 from rpi.camerainfo import *
 from rpi.roi import *
@@ -260,6 +259,7 @@ else:
         print("Calibration of existing files is only allowed, without a camera module. Program is terminated.")
         exit(0)
 if not analyzeOnly:
+    from picamera import PiCamera
     quality=inputValue("quality",1,100,quality_default,"","Quality is out of range!",True)
 else:
     quality=quality_default
@@ -358,7 +358,7 @@ if not analyzeOnly:
     defaultRanges=inputYesNo("Current ranges","Accept default ranges","Y")
     print("")
 
-    if defaultRanges=="n":
+    if not defaultRanges:
 
         # Red gain range and step
         red_gain_min=inputValue("red gain min",red_gain_min,red_gain_max,red_gain_min,"","Gain out of range!",False)
