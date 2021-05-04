@@ -355,7 +355,7 @@ if not analyzeOnly:
     print("Blue gain range: "+str(blue_gain_min)+"-"+str(blue_gain_max))
     print("Blue gain step:  "+str(blue_step))
     print("")
-    defaultRanges=inputYesNo("Current ranges","Accept default ranges","Y")
+    defaultRanges=inputYesNo("Current ranges","Accept default ranges",True)
     print("")
 
     if not defaultRanges:
