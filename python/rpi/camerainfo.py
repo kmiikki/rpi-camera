@@ -123,11 +123,14 @@ elif camera_revision=="imx477":
 	# tested on 1.6.2020: failure
 	# => Mode 2 resolution decreased to 2028x1080
 	# => Mode 3 resolution decreased to 1600x1200
+    # HQ modes tested 10.5.2021
+    # => Mode 3 max fps decreased to 42.9
+    # => Mode 4 resolution increased: 1012x760 -> 1440x768
 	videomodes=[
 		[1," 2028x1080","169:90",0,108,442,3845,2162,0.1,50],
-		[2," 2028x1080","169:90",1,0,380,4056,2274,0.1,50],
+		[2," 2028x1080","169:90",1,0,380,4056,2274,0.1,42.9],
 		[3," 1600x1200","   4:3",1,0,0,4056,3040,0.005,10],
-		[4,"  1012x760","   4:3",1,0,0,4056,3040,50.1,120],
+		[4,"  1440x768","  15:8",0,700,760,2657,1521,50.1,120],
 	]
 	red_gain_min=3.0
 	red_gain_max=4.0
