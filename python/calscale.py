@@ -37,9 +37,8 @@ prominence=5
 # Interval length threshold
 dthres=0.25
 
-# Scale and markers
-imin=0.001
-imax=1e6
+# Default unit and maximum digts of the calibration value
+factor=1
 unit="mm"
 digits=5
 
@@ -61,6 +60,44 @@ def getcal(value,digits):
     else:
         v=round(value)
     return v
+
+def parseUnit(unitStr):
+    """
+    Input format termplates:
+        mm     => 1, mm
+        0.5 mm => 0.5, mm
+        1/4 ml => 0.25, ml
+    Scale factor: python number expression, e.g. 1/2
+    Separator: <SPACE>
+        
+    """
+    # 1212.5454/2323.6775
+    # 1e6/1.e7
+    # 1e-1
+    scale=1
+    st1=""
+    st2=""
+    unit=""
+    unitStr=unitStr.strip()
+    length=len(unitStr)
+    
+    # Find first SPACE and split unitStr to 2 strings
+    space=unitStr.find(" ")
+    if space>0:
+        st1=unitStr[0:space].strip()
+        st2=unitStr[-(length-space)+1:].strip()
+        try:
+            scale=1/float(eval(st1))
+            if scale.is_integer():
+                scale=int(scale)
+        except:
+            print("Illegal interval length, unit selected: "+st2)
+            st1=""
+        finally:
+            unit=st2
+    else:
+        unit=unitStr
+    return scale,unit
 
 # Read and parse program arguments
 parser=argparse.ArgumentParser()
@@ -131,9 +168,11 @@ if not ch in [1,3]:
 # Ask for unit and scale
 while True:
     try:
-        tmp=input("Enter unit (Default="+str(unit)+": <Enter>): ")
+        tmp=input("Enter unit (or 'interval length'+space+unit) (Default="+str(unit)+": <Enter>): ")
+        if tmp!="":
+            factor,tmp=parseUnit(tmp)            
     except:
-        print("Not a valid unit.")
+        print("Not a valid unit. Valid formats: unit or 'scale number' and unit spearated with a space.")
         continue
     else:
         if tmp=="":
@@ -310,12 +349,16 @@ if len(peaks)>1:
     file.write("Max       : "+str(dmax)+"\n")
     file.write("Sdev      : "+str(dstd)+"\n\n")
     
-    # Format the calibration value
-    cal=getcal(dmean,digits)
+    # Get and format the calibration value
+    cal=getcal(dmean*factor,digits)
+    if factor!=1:
+        file.write("Calibration factor: "+str(factor)+"\n\n")
     file.write("Calibration value: "+str(cal)+" pixels/"+unit+"\n")
     file.close()
        
     print("")
+    if factor!=1:
+        print("Calibration factor: "+str(factor)+"\n")
     print("Calibration value: "+str(cal)+" pixels/"+unit)
 
 elif len(peaks)==1:
