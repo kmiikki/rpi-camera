@@ -29,6 +29,7 @@ fname=""
 parent=""
 stem=""
 ch=0
+linew=0.5
 
 # Peak fit parameters
 distance=10
@@ -221,7 +222,7 @@ else:
 peaks,properties=find_peaks(ivals,prominence=prominence,distance=distance)
 
 fig=plt.figure()
-plt.plot(values,color="blue")
+plt.plot(values,color="blue",linewidth=linew)
 plt.plot(peaks,values[peaks],"x",color="red")
 plt.xlim(0,len(values))
 if horizontal:
