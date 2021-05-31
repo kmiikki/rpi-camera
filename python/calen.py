@@ -668,7 +668,7 @@ else:
                 else:
                     saveRect=True        
     else:
-        print("\nDeviation of X and Y calibration values exceeded tolerance: "+str(roundval(cal_dev,3))+" > "+str(cal_tolerance))
+        print("\nDeviation of X and Y calibration values exceeded tolerance: "+str(roundval(abs(cal_dev),3))+" > "+str(cal_tolerance))
         saveRect=True
 
 # Save a log file
@@ -795,7 +795,7 @@ if calibration:
         else:
             file.write("Y direction solid square test passed       : "+str(erry)+"\n")
     else:
-        file.write("\nDeviation of X and Y calibration values exceeded tolerance: "+str(roundval(cal_dev,3))+" > "+str(cal_tolerance)+"\n")
+        file.write("\nDeviation of X and Y calibration values exceeded tolerance: "+str(roundval(abs(cal_dev),3))+" > "+str(cal_tolerance)+"\n")
 
 # Analysis mode section
 if not calibration:
@@ -813,7 +813,7 @@ if True in [saveall,patch,view]:
         if calibration:
             tmp="patchcal-"
             fcolor="g"
-            if dev_lengths>xyl_tolerance:
+            if abs(cal_dev)>xyl_tolerance:
                 fcolor="b"
         else:
             tmp="patch-"
@@ -828,7 +828,7 @@ if True in [saveall,patch,view]:
         ax = plt.gca()
         
         if saveRect:
-            if calibration and (isSSQ or dev_lengths<xyl_tolerance):
+            if calibration and (isSSQ or abs(cal_dev)<xyl_tolerance):
                 # Create a Square patch
                 rect = plt.Rectangle((x0_square,y0_square),s_square,s_square,facecolor=fcolor,alpha=0.25)
             else:            
