@@ -23,11 +23,17 @@ ext=".jpg"
 
 expss=0
 
-# Uncomment to overide gain ranges
+# Uncomment to override gain ranges
 #red_gain_min=1.00
 #red_gain_max=1.15
 #blue_gain_min=0.15
 #blue_gain_max=0.20
+
+# Uncomment to override gain ranges (8 MP: uvitec)
+#red_gain_min=2.0
+#red_gain_max=8.0
+#blue_gain_min=0.5
+#blue_gain_max=1.5
 
 red_step=0.1
 blue_step=0.1
@@ -240,6 +246,10 @@ artist=""
 artistfile="artist.txt"
 
 np.set_printoptions(suppress=True)
+
+if roi_result:
+    print("ROI file found: "+str(roi_x0)+","+str(roi_y0)+","+str(roi_w)+","+str(roi_h))
+    print("")
 
 print("Current directory:")
 curdir=os.getcwd()

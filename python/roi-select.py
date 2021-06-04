@@ -9,8 +9,8 @@ from rpi.camerainfo import *
 from rpi.roi import *
 import csv
 
-frame_name="roi-fov.png"
-roi_name="roi-image.png"
+frame_name="roi-fov.jpg"
+roi_name="roi-image.jpg"
 img_x0=0
 img_y0=0
 img_x1=0

@@ -14,8 +14,14 @@ from rpi.inputs2 import *
 
 CONVERT_TO_PNG=False
 
-frame_name="roi-fov.png"
-roi_name="roi-image.png"
+frame_name="roi-fov.jpg"
+roi_name="roi-image.jpg"
+
+exclude=[]
+exclude.append(frame_name)
+exclude.append(roi_name)
+exclude.append("roi-fov.png")
+exclude.append("roi-image.png")
 
 # Global variables
 fname=""
@@ -78,7 +84,7 @@ for p in sorted(path.iterdir()):
   if p.is_file():
     same_dimensions=False
     fname=p.name
-    if fname in [frame_name,roi_name]:
+    if fname in exclude:
         continue
     try:
       img = cv2.imread(str(path)+"/"+fname)

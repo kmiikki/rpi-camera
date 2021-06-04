@@ -11,8 +11,8 @@ import cv2
 import csv
 from rpi.roi import *
 
-frame_name="roi-fov.png"
-roi_name="roi-image.png"
+frame_name="roi-fov.jpg"
+roi_name="roi-image.jpg"
 decimals=4
 delimiter=";"
 img_x0=0
