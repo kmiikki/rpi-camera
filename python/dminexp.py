@@ -49,11 +49,16 @@ if camera_detected==0:
     print("Raspberry Pi camera module not found!")
     exit(1)
 
-print("List disk and partitions:")
-os.system('lsblk')
-print("\nCurrent directory:")
+print("Current directory:")
 os.system("pwd")
-path=input('\nPath to images (current directory: <Enter>): ')
+print("")
+
+roi_result=validate_roi_values()
+if roi_result:
+    display_roi_status()
+    print("")
+    
+path=input('Path to images (current directory: <Enter>): ')
 name=input('Project name (default=exp: <Enter>): ')
 
 iso=1

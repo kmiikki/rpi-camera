@@ -24,10 +24,10 @@ camera_maxy=0
 camera_max_exposure=int(6e6) # Default maximum shutter speed, OV5647
 videomodes=[]
 
-red_gain_min=1.0
-red_gain_max=4.0
-blue_gain_min=1.0
-blue_gain_max=4.0
+red_gain_min=0.1
+red_gain_max=8.0
+blue_gain_min=0.1
+blue_gain_max=8.0
 awbg_red=1.0
 awbg_blue=1.0
 

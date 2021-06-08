@@ -11,6 +11,15 @@ if camera_detected==0:
     print("Raspberry Pi camera module not found!")
     exit(0)
 
+print("Current directory:")
+os.system("pwd")
+print("")
+
+roi_result=validate_roi_values()
+if roi_result:
+    display_roi_status()
+    print("")
+
 quality_default=90
 artist=""
 artistfile="artist.txt"
@@ -18,11 +27,7 @@ artistfile="artist.txt"
 quality_default=90
 quality=inputValue("image quality",1,100,quality_default,"","Quality is out of range!",True)
 
-print("\nList disk and partitions:")
-os.system('lsblk')
-print("\nCurrent directory:")
-os.system("pwd")
-path=input('\nPath to images (current directory: <Enter>): ')
+path=input('Path to images (current directory: <Enter>): ')
 name=input('Exposure bracketing name (default=exp: <Enter>): ')
 if name=="":
     name="exp"

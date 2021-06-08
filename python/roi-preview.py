@@ -41,19 +41,26 @@ if roi_result==True:
     if camera_detected==0:
         print("Raspberry Pi camera module not found!")
         exit(0)
-      
+
+    print("Current directory:")
+    os.system("pwd")
+    print("")
+    roi_result=validate_roi_values()
+    if roi_result:
+        display_roi_status()    
+        print("")
+        
     if screen_width>max_width or screen_height>max_height:
         high_resolution=True
         cmd_roi="raspistill -t 0 -roi "
         cmd_roi+=str(roi_x0)+","+str(roi_y0)+","+str(roi_w)+","+str(roi_h)
-        print("")
         print("Current resolution:    "+str(screen_width)+"x"+str(screen_height))
         print("Max toggle resolution: "+str(max_width)+"x"+str(max_height)+"\n")
         print("Exit program: Ctrl + C -> ESC")
         os.system(cmd_roi)
 
     else:
-        print("\nToggle between FOV and ROI: SPACE")
+        print("Toggle between FOV and ROI: SPACE")
         print("Exit program:  ESC")
     camera=PiCamera(resolution=(camera_maxx,camera_maxy))
     camera.zoom=zoom
@@ -73,3 +80,5 @@ if roi_result==True:
           camera.stop_preview()
         camera.close()
         exit(0)
+else:
+    print("ROI file not found.")

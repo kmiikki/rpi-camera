@@ -35,8 +35,6 @@ def newFilename(oldname,ext):
       newname+=ext
   return newname
 
-print("ROI batch crop tool")
-
 parser=argparse.ArgumentParser()
 parser.add_argument("-i", action="store_true", help="interactive mode")
 parser.add_argument("-p", action="store_true", help="save images in lossless PNG format")
@@ -45,6 +43,15 @@ args = parser.parse_args()
 original_format=True
 if args.p:
     original_format=False
+
+print("ROI batch crop tool")
+print("")
+roi_result=validate_roi_values()
+if roi_result:
+    display_roi_status()
+else:
+    print("ROI file not found. Program is terminated.")
+    exit(0)
 
 if args.i:
     print("")
@@ -73,10 +80,6 @@ except OSError:
   print("Program is terminated.")
   print("")
   sys.exit(1)
-
-roi_result=validate_roi_values()
-if roi_result==False:
-    exit(0)
 
 t1=datetime.now()
 for p in sorted(path.iterdir()):

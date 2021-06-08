@@ -247,14 +247,16 @@ artistfile="artist.txt"
 
 np.set_printoptions(suppress=True)
 
-if roi_result:
-    print("ROI file found: "+str(roi_x0)+","+str(roi_y0)+","+str(roi_w)+","+str(roi_h))
-    print("")
-
 print("Current directory:")
 curdir=os.getcwd()
 print(curdir)
-path=input('\nPath to images (current directory: <Enter>): ')
+print("")
+
+if roi_result:
+    display_roi_status()
+    print("")
+
+path=input('Path to images (current directory: <Enter>): ')
 name=input('Calibration name (Default: '+default_calibration_name+'): ')
 if name=="":
     name=default_calibration_name

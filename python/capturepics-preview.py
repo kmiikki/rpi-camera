@@ -56,6 +56,16 @@ if camera_detected==0:
     print("Raspberry Pi camera module not found!")
     exit(0)
 
+print("Current directory:")
+os.system("pwd")
+print("")
+
+roi_result=validate_roi_values()
+if roi_result:
+    zoom=(roi_x0,roi_y0,roi_w,roi_h)
+    display_roi_status()
+    print("")
+
 png_mode="y"
 default_png="y"
 png_mode=inputYesNo("PNG","PNG mode on",default_png)
@@ -65,11 +75,8 @@ if png_mode=="n":
     quality_default=90
     quality=inputValue("image quality",1,100,quality_default,"","Quality is out of range!",True)
 
-print("\nList disk and partitions:")
-os.system('lsblk')
-print("\nCurrent directory:")
-os.system("pwd")
-path=input('\nPath to images (current directory: <Enter>): ')
+print("")
+path=input('Path to images (current directory: <Enter>): ')
 name=input('Project name (default=pic: <Enter>): ')
 
 iso=100
@@ -161,10 +168,6 @@ if png_mode=="y":
 else:
     file.write(".jpg\n")
 
-roi_result=validate_roi_values()
-if roi_result==True:
-    zoom=(roi_x0,roi_y0,roi_w,roi_h)
-
 root=tkinter.Tk()
 w=root.winfo_screenwidth()
 h=root.winfo_screenheight()
@@ -245,7 +248,10 @@ while framenumber<10**digits:
     else:
         fname=fname+".jpg"
     old=camera.zoom
-    camera.zoom=(0,0,1,1)
+    if roi_result:
+        camera.zoom=zoom
+    else:
+        camera.zoom=(0,0,1,1)
     if png_mode=="y":
         camera.capture(fname)
     else:

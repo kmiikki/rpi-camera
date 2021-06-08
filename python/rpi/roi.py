@@ -2,6 +2,7 @@
 # (C) Kim Miikki 2020
 
 import csv
+from pathlib import Path
 
 roi_decimals=4
 roi_delimiter=";"
@@ -19,6 +20,7 @@ roi_x0=0
 roi_y0=0
 roi_w=0
 roi_h=0
+roi_dir=""
 roi_errors=[]
 
 roilist=[]
@@ -150,7 +152,25 @@ def read_roi_file(filename,file_path=""):
         result=False
     return result
 
+def display_roi_status():
+    if roi_dir!="":
+        print("ROI file found in "+roi_dir+" directory: "+str(roi_x0)+","+str(roi_y0)+","+str(roi_w)+","+str(roi_h))
+    else:
+        print("ROI file not found!")
+
+# Get current path
+p=Path(".").resolve()
+
 roi_file_exists=read_roi_file(roi_filename)
+if roi_file_exists:
+    roi_dir="current"
+else:
+    # Check if roi.ini exists in parent path
+    pp=p.parent.resolve()   
+    if pp!=p:
+        roi_file_exists=read_roi_file(str(pp)+"/"+roi_filename)
+    if roi_file_exists:
+        roi_dir="parent"
 
 if roi_file_exists:
     dict_to_localvariables()
