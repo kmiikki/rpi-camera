@@ -449,7 +449,7 @@ if not autopeaks:
    
 # List Right peaks in X direction
 if not autopeaks:
-    if len(lps)>1:
+    if len(rps)>1:
         print("")
         print("X direction, R peaks (right):")
         print("pos     der"+str(derivative)+"     value  default")
@@ -502,7 +502,7 @@ if not autopeaks:
         print("Y direction, R peaks (bottom):")
         print("pos     der"+str(derivative)+"     value  default")
         i=0
-        while i<len(rps):
+        while i<len(bps):
             s=str(bps[i]).rjust(5)
             s+=": "
             s+=str(round(der_arrays[1][bps[i]],digits)).rjust(digits+4)
