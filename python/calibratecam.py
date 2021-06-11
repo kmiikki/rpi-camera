@@ -35,6 +35,14 @@ expss=0
 #blue_gain_min=0.5
 #blue_gain_max=1.5
 
+# Uncomment to override gain ranges (wide range)
+#red_gain_min=0.5
+#red_gain_max=8.0
+#blue_gain_min=0.5
+#blue_gain_max=8.0
+#red_step=0.5
+#blue_step=0.5
+
 red_step=0.1
 blue_step=0.1
 

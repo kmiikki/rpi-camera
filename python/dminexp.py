@@ -73,8 +73,8 @@ default_awb="y"
 awb_on=inputYesNo("AWB","AWB mode on",default_awb)
 if awb_on=="n":
     print("")
-    awbg_red=inputValue("red gain",1.0,8.0,awbg_red,"","Value out of range!",False)
-    awbg_blue=inputValue("blue gain",1.0,8.0,awbg_blue,"","Value out of range!",False)
+    awbg_red=inputValue("red gain",0.01,8.0,awbg_red,"","Value out of range!",False)
+    awbg_blue=inputValue("blue gain",0.01,8.0,awbg_blue,"","Value out of range!",False)
 
 default_save_images="y"
 print("")

@@ -241,6 +241,22 @@ plt.close(fig)
 
 if len(peaks)>1:
     
+    # Plot peak prominences
+    pvalues=properties["prominences"]
+    fig=plt.figure()
+    ax=fig.gca()
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.hist(properties["prominences"],rwidth=0.8)
+    plt.xlabel("Peak prominence")
+    plt.ylabel("Count")
+    if save:
+        # calpp = Calibration peak prominance plot
+        plt.savefig(curdir+"calpp-"+stem+".png", dpi=300)
+    if view:
+        plt.show() 
+    plt.close(fig)
+    
     # Calculate element-wise peak distances
     distances=[]
     left=peaks[0]
