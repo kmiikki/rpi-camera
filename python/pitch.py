@@ -294,8 +294,9 @@ for p in files:
             dmax=np.max(distances)
             dstd=np.std(distances)
             pitch=getpitch(dmean/cal,digits)
+            pitch_median=getpitch(dmedian/cal,digits)
 
-            results.append([stem,c+1,pitch,dmean,dmedian,dstd,len(peaks),n,dmin,dmax])        
+            results.append([stem,c+1,pitch,pitch_median,dmean,dmedian,dstd,len(peaks),n,dmin,dmax])        
         
             print("")
             print("Distance statistics (pixel values):")
@@ -363,11 +364,31 @@ for p in files:
                 file.write("Min       : "+str(dmin)+"\n")
                 file.write("Max       : "+str(dmax)+"\n")
                 file.write("Sdev      : "+str(dstd)+"\n\n")
-                file.write("Pitch: "+str(pitch)+" "+unit+"\n\n")
+                file.write("Pitch mean  : "+str(pitch)+" "+unit+"\n")
+                file.write("Pitch median: "+str(pitch_median)+" "+unit+"\n\n")
                 file.close()
+            
+            if logs:
+                # Create and save a list of peak data
+                peakheader=["Peak","Prominence","Distance"]
+                peakdata=[]
+                i=0
+                imax=len(peaks)
+                for p in properties["prominences"]:
+                    s=[peaks[i],p]
+                    if i<imax-1:
+                        s.append(distances[i])
+                    peakdata.append(s)
+                    i+=1
+                # capdata = color analysis peakdata
+                with open(curdir+"capdata-"+stem+".csv","w",newline="\n") as csvfile:
+                    writer=csv.writer(csvfile,delimiter=',',quotechar='"')
+                    writer.writerow(peakheader)
+                    writer.writerows(peakdata)
                
             print("")
-            print("Pitch: "+str(pitch)+" "+unit)
+            print("Pitch mean  : "+str(pitch)+" "+unit)
+            print("Pitch median: "+str(pitch_median)+" "+unit)
             print("")
             
             c+=1
@@ -381,31 +402,31 @@ if c==0:
 else:
 
     # Save results to a file
-    header=["Name","Image","Pitch ("+unit+")","Mean","Median","Sdev","Peaks","N","Min","Max"]
+    header=["Name","Image","Pitch mean("+unit+")","Pitch median("+unit+")","Mean","Median","Sdev","Peaks","N","Min","Max"]
     # Current directory
     cdir=str(PosixPath(curdir).resolve()).split("/")[-1]    
     with open(cdir+".csv","w",newline="\n") as csvfile:
         writer=csv.writer(csvfile,delimiter=',',quotechar='"')
         writer.writerow(header)
         writer.writerows(results)
+    
+    # Plot/save a pitch graph
+    if (True in [save,view,pitchplot]) and c>1:
+        ar=np.array(results).T
+        xs=ar[1].astype(np.int)
+        ys=ar[2].astype(np.float)
         
-        # Plot/save a pitch graph
-        if True in [save,view,pitchplot]:
-            ar=np.array(results).T
-            xs=ar[1].astype(np.int)
-            ys=ar[2].astype(np.float)
-            
-            fig=plt.figure()
-            ax=fig.gca()
-            ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-            plt.xlim(xs[0],xs[-1])
-            ax.yaxis.set_major_formatter(plt.FormatStrFormatter('%.2f'))
-            plt.plot(xs,ys)
-            plt.xlabel(header[1])
-            plt.ylabel(header[2])
-            if save or pitchplot:
-                # capi = Color analysis pitch plot
-                plt.savefig(curdir+"capi-"+cdir+".png", dpi=300)
-            if view:
-                plt.show()    
-            plt.close(fig)
+        fig=plt.figure()
+        ax=fig.gca()
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        plt.xlim(xs[0],xs[-1])
+        ax.yaxis.set_major_formatter(plt.FormatStrFormatter('%.2f'))
+        plt.plot(xs,ys)
+        plt.xlabel(header[1])
+        plt.ylabel(header[2])
+        if save or pitchplot:
+            # capi = Color analysis pitch plot
+            plt.savefig(curdir+"capi-"+cdir+".png", dpi=300)
+        if view:
+            plt.show()    
+        plt.close(fig)
