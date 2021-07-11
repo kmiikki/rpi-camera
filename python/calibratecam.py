@@ -494,8 +494,8 @@ subdirs_count=0
 
 # Capture pictures
 if not analyzeOnly:
-    reds=int((red_gain_max-red_gain_min+red_step)/red_step)
-    blues=int((blue_gain_max-blue_gain_min+blue_step)/blue_step)
+    reds=round((red_gain_max-red_gain_min+red_step)/red_step)
+    blues=round((blue_gain_max-blue_gain_min+blue_step)/blue_step)
     combinations=reds*blues
     pictures=combinations*len(exposure)
     digits=len(str(pictures))
