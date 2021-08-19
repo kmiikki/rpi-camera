@@ -1,0 +1,5 @@
+All scripts are licensed under the terms of the MIT license, unless otherwise noted in this file.
+
+Script		License
+------		-------
+numlog.py	GPLv3
