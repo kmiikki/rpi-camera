@@ -936,7 +936,10 @@ def main():
             f.write("\n")
             f.write("H/W ratio       : "+str(float(H_W_Ratio)))
             if args.hw_ratio is not None:
-                alist.append("-hw "+str(int(args.hw_ratio)))
+                tmp=float(args.hw_ratio)
+                if tmp.is_integer:
+                    tmp=int(args.hw_ratio)
+                alist.append("-hw "+str(tmp))
             f.write("\n")
             f.write("Tilt angle      : "+str(float(arc_tan_theta)))
             if args.tilt_angle is not None:
