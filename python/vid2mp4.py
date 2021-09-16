@@ -79,12 +79,12 @@ except:
     sys.exit(0)
 
 pts_file=fname.stem+".pts"
+ar=np.array([])
 if os.path.isfile(pts_file):
     print("PTS file found: "+pts_file)
     # Count frames        
     frames=0
     firstLine=True
-    ar=np.array([])
     for line in open(pts_file):
         if firstLine:
             firstLine=False
