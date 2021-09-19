@@ -14,13 +14,18 @@ import pandas as pd
 # gtlvideo version 1.1
 # OpenCV based crop/resize instead of ffmpeg: 3.5x processing speedup
 
+# gtlvideo version 1.2
+# Video creation support: h264, mkv and mp4
+# ffmpeg argument added:  -pix_fmt yuv420p
+
 # Global variables
-version_text="1.1"
+version_text="1.2"
 copyright_text="(C) Kim Miikki 2019"
 project_name=""
 isProjectName=False
 video_name=""
 log_name=""
+vformat="mkv"
 
 files_cr2=0
 wcr2=0
@@ -526,6 +531,26 @@ if difflist.size>0:
   print("\nProgram is terminated.\n")
   sys.exit(1)
 
+# Select video codec or container format
+print("")
+while True:
+    try:
+        ask="Video codec or container format (h264, mkv, mp4; Default="+vformat+" <Enter>): "
+        tmp=input(ask)
+        if tmp=="":
+            vformat="."+vformat
+            break
+        tmp=tmp.lower()
+        if tmp in ["h264","mkv","mp4"]:
+            vformat="."+tmp
+            break
+        raise ValueError("ValueError")
+    except ValueError:
+        print("Not a valid format!")
+        continue
+    else:
+        continue
+
 # Select project name
 while True:
   try:
@@ -540,8 +565,8 @@ while True:
     continue
   else:
     if (tmp==""):
-      print("No project name selected. Default video name: video.mkv")
-      video_name="video.mkv"
+      print("No project name selected. Default video name: video"+vformat)
+      video_name="video"+vformat
       log_name="video.log"
       break
     else:
@@ -1318,16 +1343,16 @@ if (xnew<wn) or (ynew<hn):
 else:
   # Native mode images -> native mode video (no cropping or resizing)
   # FORMAT: ffmpeg -r 30 -start_number 6894 -i IMG_%04d.png-3840.png ouput.mkv
-  # ffmpeg -i input.mp4 -c:v libx264 -crf 23 output.mp4
+  # ffmpeg -i input.mp4 -c:v libx264 -crf 23 -pix_fmt yuv420p output.mp4
   if file_format=="CR2":
     input_path=png_path
     suffix=".png"
   else:
     input_path=source_path
 
-# Create MKV video script
+# Create video script
 # FORMAT:
-# ffmpeg -y -r 25 -start_number 80842 -i /home/pi/tlvimg/20190322_%06d.jpg -c:v libx264 -crf 23 /home/pi/tlvimg/video/video.mkv
+# ffmpeg -y -r 25 -start_number 80842 -i /home/pi/tlvimg/20190322_%06d.jpg -c:v libx264 -crf 23 -pix_fmt yuv420p /home/pi/tlvimg/video/video.mkv
 mkv_cmd="ffmpeg -y -r "+str(fps)+" -start_number "+str(frames_start)+" "
 mkv_cmd+="-i "+"\""+input_path
 if (xnew<wn) or (ynew<hn):
@@ -1344,11 +1369,12 @@ mkv_cmd+="\" "
 
 mkv_cmd+="-c:v libx264 "
 mkv_cmd+="-crf "+str(crf)+" "
+mkv_cmd+="-pix_fmt yuv420p "
 mkv_cmd+="\""+video_path
 if project_name!="":
-  mkv_cmd+=project_name+".mkv"
+  mkv_cmd+=project_name+vformat
 else:
-  mkv_cmd+="video.mkv"
+  mkv_cmd+="video"+vformat
 mkv_cmd+="\""
 list_summary.append("")
 list_summary.append("Stage "+str(stage)+": Create video")

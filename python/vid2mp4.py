@@ -9,6 +9,9 @@ Prerequisite:
 MP4Box
 - install: sudo apt install -y gpac
 
+Convert mkv to h264:
+ffmpeg -i video.mkv -c:v libx264 -profile:v high444 -level:v 4.0 -pix_fmt yuv420p video.h264
+
 """
 
 import matplotlib.pyplot as plt
