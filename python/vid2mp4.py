@@ -33,11 +33,12 @@ isFPS=False
 noGraphs=False
 isPTS=False
 saveIntervals=True
+saveIntervalsDist=True
 fname=""
 videoname=""
 
 bins=20
-stat_decimals=2
+stat_decimals=3
 
 # Read and parse program arguments
 parser=argparse.ArgumentParser()
@@ -97,7 +98,7 @@ if os.path.isfile(pts_file):
             start_value=float(line)
             continue
         end_value=float(line)
-        ar=np.append(ar,end_value-start_value)
+        ar=np.append(ar,round(end_value-start_value,stat_decimals))
         start_value=end_value
     # Calculate interval statistics
     if len(ar)>0:
@@ -106,17 +107,37 @@ if os.path.isfile(pts_file):
         b=int(n/4)
         if b<1:
             b=1
+        if b>512:
+            b=512
         bins=b
+        bins_df=bins
         
         isPTS=True
+               
+        # Data distribution
+        ar_values,ar_count=np.unique(ar,return_counts=True)
+        if len(ar)>1:
+            a=ar_values[:-1]
+            b=ar_values[1:]
+            ar_diff=b-a
+            dif_min=ar_diff.min()
+            ar_range=ar.max()-ar.min()
+            ar_steps=round(ar_range/dif_min)+1            
+            #print(ar_steps)
+            if ar_steps<bins:
+                bins=ar_steps
+                # Double bins amount
+                bins*=2
+                
         # Probability distribution and cumalative distribution functions
-        count, bins_count = np.histogram(ar, bins=bins)
+        count, bins_count = np.histogram(ar, bins=bins_df)
         pdf=count/sum(count)
         cdf=np.cumsum(pdf)
+        
         # Statistical values
         mean=np.mean(ar)
         median=round(np.median(ar),stat_decimals)
-        variance=round(np.var(ar),stat_decimals)
+        variance=round(np.var(ar),8)
         
         # Plot graphs
         if noGraphs==False:
@@ -124,13 +145,15 @@ if os.path.isfile(pts_file):
             fig=plt.figure()
             plt.xlabel("Interval (ms)")
             plt.ylabel("Count")
-            plt.hist(ar)
+            plt.ticklabel_format(useOffset=False,style='plain')
+            plt.hist(ar,bins)
             plt.savefig(fname.stem+"-histogram.png",dpi=300)
             plt.close(fig)
             # PDF and CDF
             fig=plt.figure()
             plt.xlabel("Interval (ms)")
             plt.ylabel("Density")
+            plt.ticklabel_format(useOffset=False,style='plain')
             plt.plot(bins_count[1:], pdf, color="red", label="PDF")
             plt.plot(bins_count[1:], cdf, color="blue", label="CDF")
             plt.legend()
@@ -141,6 +164,11 @@ if os.path.isfile(pts_file):
             with open(fname.stem+"-intervals.txt", "w") as f:
                 for s in ar:
                     f.write(str(s) +"\n")
+        # Save interval distribution
+        if saveIntervals:
+            with open(fname.stem+"-intervals-distribution.txt", "w") as f:
+                for (v,c) in zip(ar_values,ar_count):
+                    f.write(str(v)+","+str(c) +"\n")
     else:
         print("No intervals in the PTS file!")
  
@@ -157,7 +185,7 @@ else:
     tframe=(mean/1000)/speed
     fps=1/tframe
 
-    mean=round(mean,stat_decimals)
+    mean=round(mean,stat_decimals+1)
     
 fps=round(fps,3)
 if fps_rec.is_integer():
