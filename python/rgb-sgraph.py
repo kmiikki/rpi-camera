@@ -125,7 +125,10 @@ except:
 d=np.array(data)
 
 # Transpose and remove the first line
-d=d.T[1:]
+#d=d.T[1:]
+d=d.T
+fnames=d[0][1:]
+d=d[1:]
 
 # Remove the first column and convert the array to float type
 d=d[..., 1:]
@@ -236,6 +239,8 @@ if sel_method==1:
     newcsv="sdma-"+fname
 elif sel_method==2:
     newcsv="sdsg-"+fname
+sdata[0][0]="Number"
+i=0
 if newcsv!="":
     with open(newcsv, 'w') as file:
         writer = csv.writer(file)
@@ -249,8 +254,12 @@ if newcsv!="":
         sd=np.around(sd[1:],decimals)
         sd=np.concatenate(([st],sd),axis=0).T
         
-        # write multiple rows
-        writer.writerows(sd)
+        # write data rows
+        i=0
+        for row in sd:
+            i+=1
+            #print([i]+list(row))
+            writer.writerow([i]+list(row))
     
 # Plot parameters
 linew=inputValue("Line width",linew_min,linew_max,linew_default,"","Width out of range!",False)
