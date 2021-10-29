@@ -116,8 +116,10 @@ def analyze(xs,ys,auc_list):
         answer=inputYesNo("normal mode","Is the spectrum type normal?",True)
         isTransmission=not answer
     firstAnalyze=False
-    
+
+    sname="spectrum"    
     if isTransmission:
+        sname="transmission-"+sname
         maxy=spectrum.max()
         if level<transmission_threshold:
             print("Low transmission level")
@@ -125,7 +127,7 @@ def analyze(xs,ys,auc_list):
             #tsp=100*spectrum/maxy
         else:
             tsp=spectrum
-    tmp=str(currentFirst).rjust(digits,"0")+"-spectrum-mean_("+str(num)+"#"+str(interval)+").csv"
+    tmp=str(currentFirst).rjust(digits,"0")+"-"+sname+"-mean_("+str(num)+"#"+str(interval)+").csv"
     a=xs.round(3)
     b=spectrum.round(3)
     c=np.vstack((a,b)).T
@@ -152,7 +154,7 @@ def analyze(xs,ys,auc_list):
         if isGrid:
             plt.grid()
         plt.plot(xs,spectrum)
-        tmp=str(currentFirst).rjust(digits,"0")+"-spectrum-mean_("+str(num)+"#"+str(interval)+").png"
+        tmp=str(currentFirst).rjust(digits,"0")+"-"+sname+"-mean_("+str(num)+"#"+str(interval)+").png"
         plt.savefig(data_dir+"/"+tmp,dpi=300)
         if isPlots:
             plt.show()
@@ -171,7 +173,7 @@ def analyze(xs,ys,auc_list):
         if isGrid:
             plt.grid()
         plt.plot(xs,tsp)
-        tmp=str(currentFirst).rjust(digits,"0")+"-transmission-spectrum-mean_("+str(num)+"#"+str(interval)+").png"
+        tmp=str(currentFirst).rjust(digits,"0")+"-"+sname+"-mean_("+str(num)+"#"+str(interval)+").png"
         plt.savefig(data_dir+"/"+tmp,dpi=300)
         if isPlots:
             plt.show()
