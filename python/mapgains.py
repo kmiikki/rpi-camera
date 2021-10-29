@@ -621,7 +621,7 @@ if not file_mode:
                     out+=":"
                     out=out.ljust(7," ")
                     out+="  "
-                    out+=format(b_avg,"."+str(rgb_decimals)+"f").rjust(chlen," ")+"  "
+                    out+=format(r_avg,"."+str(rgb_decimals)+"f").rjust(chlen," ")+"  "
                     out+=format(g_avg,"."+str(rgb_decimals)+"f").rjust(chlen," ")+"  "
                     out+=format(b_avg,"."+str(rgb_decimals)+"f").rjust(chlen," ")+"  "
                     out+=format(dist,"."+str(rgb_decimals)+"f").rjust(chlen+1," ")
@@ -662,10 +662,10 @@ if not file_mode:
             blue_gain_max=blue+blue_step
         if red_gain_max>8:
             red_gain_max=8
-            red_gain_max=red-red_step
+            red_gain_min=red-red_step
         if blue_gain_max>8:
             blue_gain_max=8
-            blue_gain_max=blue-blue_step
+            blue_gain_min=blue-blue_step
         red_step/=rdivisor
         blue_step/=bdivisor
 
