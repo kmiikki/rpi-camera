@@ -73,17 +73,19 @@ print("Current directory:")
 print(curdir)
 print("")
 
-while filter_start=="":
-    try:
-        tmp=input("Filename start pass filter (Default=NONE: <Enter>): ")
-        if tmp=="":
-            print("All *"+ext+" included in search")
+if args.f == None:
+    while filter_start=="":
+        try:
+            tmp=input("Filename start pass filter (Default=NONE: <Enter>): ")
+            if tmp=="":
+                print("All *"+ext+" included in search")
+                break
+            filter_start=tmp
             break
-        filter_start=tmp
-        break
-    except:
-        print("Not a valid string.")
-        continue
+        except:
+            print("Not a valid string.")
+            continue
+    print("")
 
 # Create a list of files
 # Template:
@@ -135,7 +137,7 @@ separator="\t"
 # Read the first file and analyze it
 mvalue, mcounts, ys_count = maxval_stat(in_filtered[0])
 
-# Test occurence of 0, 100 and an other number
+# Test occurrence of 0, 100 and an other number
 isZero=False
 is100=False
 isOther=False
@@ -149,22 +151,22 @@ elif mvalue>0:
 # Test threshold
 if 100*mcounts/ys_count > transmission_threshold:
     if is100 and not isTransmission:
-        print("")
         answer=inputYesNo("transmission mode","Is the spectrum type transmission?",True)
+        print("")
         isTransmission=answer
     elif isOther and not isTransmissionNormalize:
-        print("")
         print("First spectrum")
         print("--------------")
         print("Most common value: "+str(mvalue))
-        print("Count:     "+str(mcounts))
-        print("Occurence: "+str(round(100*mcounts/ys_count,2))+" %")
-        answer=inputYesNo("transmission mode","Is the spectrum type unnormalized transmission?",True)
+        print("Count:      "+str(mcounts))
+        print("Occurrence: "+str(round(100*mcounts/ys_count,2))+" %")
+        print("")
+        answer=inputYesNo("transmission mode","Is the spectrum type non-normalized transmission?",True)
+        print("")
         isTransmissionNormalize=answer
 if isTransmission or isTransmissionNormalize:
     ylabel="Transmission (%)"
 
-print("")
 print("Data parser started:")
 isFirst=True
 for name in in_filtered:

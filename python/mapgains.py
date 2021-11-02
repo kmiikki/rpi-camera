@@ -82,6 +82,7 @@ interactive=True
 all_files=True
 short_dtstr=False
 quick_calibration=False
+method="Calibration"
 
 results=[]
 # adir = analysis dir: "" in capture mode, "%Y%m%d-%H%M%S" in file_mode
@@ -556,6 +557,8 @@ if not file_mode:
     bdivisor=10
     target_decimals=4
     cur_decimals=0
+    if auto_calibration:
+        method="Iteration"
     while (cur_decimals<target_decimals+1):
         ct0=datetime.now()
         if str(red_step).find(".")>=0:
@@ -588,7 +591,7 @@ if not file_mode:
         gmap=[]
         bmap=[]
         bwmap=[]
-        print("Calibration "+str(cal_number+1))
+        print(method+" "+str(cal_number+1))
         print("")
         header="rg, bg:".ljust(gainlen," ")+"  "
         header+="red".rjust(chlen," ")+"  "
@@ -681,7 +684,7 @@ gains_RGB=np.round(gains_RGB,10)
 if len(gains_RGB)>0:
     with open(adir+"rgbcals-data-"+dt_part+".csv", "w") as f:
         writer = csv.writer(f)
-        header=["Calibration","rgain","bgain","R mean","G mean","B mean","ABS(RG)","ABS(RB)","ABS(GB)","mdist"]
+        header=["Iteration","rgain","bgain","R mean","G mean","B mean","ABS(RG)","ABS(RB)","ABS(GB)","mdist"]
         writer.writerow(header)
         writer.writerows(gains_RGB)
     
@@ -695,7 +698,7 @@ if len(gains_RGB)>1:
     fig=plt.figure()
     plt.title("Red and blue gains")
     plt.ylabel("Gain value")
-    plt.xlabel("Calibration")
+    plt.xlabel("Iteration")
     plt.xlim(cal_min,cal_max)
     plt.gca().xaxis.set_major_locator(mticker.MultipleLocator(1))
     plt.plot(gains_RGB[0],gains_RGB[1],color="red")
@@ -708,7 +711,7 @@ if len(gains_RGB)>1:
     fig=plt.figure()
     plt.title("RGB mean values")
     plt.ylabel("RGB mean value")
-    plt.xlabel("Calibration")
+    plt.xlabel("Iteration")
     plt.xlim(cal_min,cal_max)
     ymin=min([gains_RGB[3].min(),gains_RGB[4].min(),gains_RGB[5].min()])
     ymax=max([gains_RGB[3].max(),gains_RGB[4].max(),gains_RGB[5].max()])
@@ -725,7 +728,7 @@ if len(gains_RGB)>1:
     fig=plt.figure()
     plt.title("RGB mean absolute distances")
     plt.ylabel("RGB mean absolute distance value")
-    plt.xlabel("Calibration")
+    plt.xlabel("Iteration")
     plt.xlim(cal_min,cal_max)
     ymin=min([gains_RGB[6].min(),gains_RGB[7].min(),gains_RGB[8].min()])
     ymax=max([gains_RGB[6].max(),gains_RGB[7].max(),gains_RGB[8].max()])
@@ -743,7 +746,7 @@ if len(gains_RGB)>1:
     fig=plt.figure()
     plt.title("Gray mean absolute distance")
     plt.ylabel("Gray mean absolute distance value")
-    plt.xlabel("Calibration")
+    plt.xlabel("Iteration")
     plt.xlim(cal_min,cal_max)
     ymin=gains_RGB[9].min()
     ymax=gains_RGB[9].max()
