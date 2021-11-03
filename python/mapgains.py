@@ -45,10 +45,10 @@ height=240
 pip=(0,0,width,height)
 
 # R and B gains ranges
-rs=[1,8]
-r_step=1
-bs=[1,8]
-b_step=1
+rs=[0.5,8]
+r_step=0.5
+bs=[0.5,8]
+b_step=0.5
 decimals=10
 rgb_decimals=3
 
@@ -521,9 +521,9 @@ elif interactive or auto_calibration:
             blue_step=inputValue("blue gain step",blue_gain_start,blue_max_step,blue_step,"","Step out of range!",False)
     else:
         # Auto calibration: round 1 values
-        red_step=1
+        red_step=r_step
         red_gain_min=red_step
-        blue_step=1
+        blue_step=b_step
         blue_gain_min=blue_step
 
 if not file_mode:
@@ -644,6 +644,10 @@ if not file_mode:
         else:
             dt_part=ct0.strftime("%Y%m%d-%H%M%S")
         analyze_data(cal_number+1,pklfiles)
+        if cal_number==1:
+            # Adjust step for round 2
+            red_step=1
+            blue_step=1
         
         if not auto_calibration:
             break
