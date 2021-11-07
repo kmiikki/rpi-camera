@@ -14,7 +14,7 @@ Mandatory files (output):
 rgbmap-cal-DT.txt
 rgbmap-mdist-DT.png
 
-where DT="YYYYMMDD-hhmm"
+where DT="YYYYMMDD-hhmmss"
 """
 import argparse
 import os
@@ -76,12 +76,15 @@ pklfiles=0
 dt_part=""
 curdirPrinted=False
 auto_calibration=False
+precision_scan=False
+precision_scan_wide=False
 previewImage=True
 file_mode=False
 interactive=True
 all_files=True
 short_dtstr=False
 quick_calibration=False
+isIteration=False
 method="Calibration"
 
 results=[]
@@ -304,9 +307,12 @@ parser.add_argument("-f", type=Path, help="file mode: read rgbmap-YYYYMMDD-hhmm.
 parser.add_argument("-a", action="store_true", help="auto, non-interactive mode")
 parser.add_argument("-c", action="store_true", help="auto calibration")
 parser.add_argument("-q", action="store_true", help="quick calibration")
+parser.add_argument("-p", action="store_true", help="precision scan")
+parser.add_argument("-pw", action="store_true", help="precision scan wide")
 parser.add_argument("-d", action="store_true", help="disable image preview")
 parser.add_argument("-n", action="store_true", help="do not create all analysis files")
 parser.add_argument("-s", action="store_true", help="use short date-time string")
+parser.add_argument("-i", action="store_true", help="x axis label: Iteration")
 args = parser.parse_args()
 
 if args.f:
@@ -337,6 +343,15 @@ if args.c:
 if args.q:
     quick_calibration=True
 
+if args.p:
+    precision_scan=True
+    auto_calibration=True
+
+if args.pw:
+    precision_scan=True
+    precision_scan_wide=True
+    auto_calibration=True
+
 if args.d:
     previewImage=False
 
@@ -346,10 +361,17 @@ if args.n:
 if args.s:
     short_dtstr=True
 
+if args.i:
+    isIteration=True
+
 if file_mode and auto_calibration:
     print("File mode and auto calibration are not allowed simultaneously.")
     sys.exit(0)
-
+    
+if precision_scan and True in [file_mode,quick_calibration]:
+    print("Presicion scan must run without any of following arguments: -f and -q.")
+    sys.exit(0)
+    
 if not file_mode:
     # ROI
     roi_result=validate_roi_values()
@@ -475,12 +497,21 @@ if file_mode:
             error=True
         if error:
             sys.exit(1)
+
+        # Calculate ranges and steps
+        red_gain_min=min(rlist)
+        red_gain_max=max(rlist)
+        r_step=round((rlist[-1]-rlist[0])/(len(rlist)-1),10)
+
+        blue_gain_min=min(blist)
+        blue_gain_max=max(blist)
+        b_step=round((blist[-1]-blist[0])/(len(rlist)-1),10)
         
         count+=1
         analyze_data(count,pklfiles)
-        
-elif interactive or auto_calibration:
-    if interactive:
+       
+elif True in [interactive,auto_calibration,precision_scan]:
+    if interactive or precision_scan:
         if camera_revision=="imx477":
             exp_min=250
         elif camera_revision=="imx219":
@@ -520,11 +551,45 @@ elif interactive or auto_calibration:
         else:
             blue_step=inputValue("blue gain step",blue_gain_start,blue_max_step,blue_step,"","Step out of range!",False)
     else:
-        # Auto calibration: round 1 values
-        red_step=r_step
-        red_gain_min=red_step
-        blue_step=b_step
-        blue_gain_min=blue_step
+        if not precision_scan:
+            # Auto calibration: round 1 values
+            red_step=r_step
+            red_gain_min=red_step
+            blue_step=b_step
+            blue_gain_min=blue_step
+        else:
+            # Precision scan
+            if not precision_scan_wide:
+                rstep=0.001
+                rmin=0.01
+                rmax=7.99
+            else:
+                rstep=0.01
+                rmin=0.1
+                rmax=7.9
+            rdefault=1
+            red_target=inputValue("red gain target",rmin,rmax,rdefault,"","Gain out of range!",False)
+            red_gain_min=round(red_target-10*rstep,10)
+            if red_gain_min<=0:
+                red_gain_min=rstep
+            red_gain_max=round(red_target+10*rstep,10)
+            red_step=rstep
+            
+            if not precision_scan_wide:
+                bstep=0.001
+                bmin=0.01
+                bmax=7.99
+            else:
+                bstep=0.01
+                bmin=0.1
+                bmax=7.9
+            bdefault=1
+            blue_target=inputValue("blue gain target",bmin,bmax,bdefault,"","Gain out of range!",False)
+            blue_gain_min=round(blue_target-10*rstep,10)
+            if blue_gain_min<=0:
+                blue_gain_min=bstep
+            blue_gain_max=round(blue_target+10*bstep,10)
+            blue_step=bstep
 
 if not file_mode:
     from picamera import PiCamera
@@ -557,6 +622,11 @@ if not file_mode:
     bdivisor=10
     target_decimals=4
     cur_decimals=0
+    if precision_scan:
+        if not precision_scan_wide:
+            cur_decimals=3
+        else:
+            cur_decimals=2
     if auto_calibration:
         method="Iteration"
     while (cur_decimals<target_decimals+1):
@@ -644,7 +714,7 @@ if not file_mode:
         else:
             dt_part=ct0.strftime("%Y%m%d-%H%M%S")
         analyze_data(cal_number+1,pklfiles)
-        if cal_number==1:
+        if (cal_number==1) and (not precision_scan):
             # Adjust step for round 2
             red_step=1
             blue_step=1
@@ -694,6 +764,9 @@ if len(gains_RGB)>0:
     
 # Plot calibration series data plots
 if len(gains_RGB)>1:    
+    xlabel="Iteration"
+    if file_mode and (not isIteration):
+        xlabel="Calibration"
     gains_RGB=np.array(gains_RGB).T
     cal_min=gains_RGB[0].min()
     cal_max=gains_RGB[0].max()
@@ -702,7 +775,7 @@ if len(gains_RGB)>1:
     fig=plt.figure()
     plt.title("Red and blue gains")
     plt.ylabel("Gain value")
-    plt.xlabel("Iteration")
+    plt.xlabel(xlabel)
     plt.xlim(cal_min,cal_max)
     plt.gca().xaxis.set_major_locator(mticker.MultipleLocator(1))
     plt.plot(gains_RGB[0],gains_RGB[1],color="red")
@@ -711,11 +784,33 @@ if len(gains_RGB)>1:
     plt.savefig(adir+"rgbcals-gains-"+dt_part+".png",dpi=300)
     plt.close(fig)    
 
+    fig=plt.figure()
+    plt.title("Red gain")
+    plt.ylabel("Gain value")
+    plt.xlabel(xlabel)
+    plt.xlim(cal_min,cal_max)
+    plt.gca().xaxis.set_major_locator(mticker.MultipleLocator(1))
+    plt.plot(gains_RGB[0],gains_RGB[1],color="red")
+    plt.grid()
+    plt.savefig(adir+"rgbcals-rgain-"+dt_part+".png",dpi=300)
+    plt.close(fig)    
+
+    fig=plt.figure()
+    plt.title("Blue gain")
+    plt.ylabel("Gain value")
+    plt.xlabel(xlabel)
+    plt.xlim(cal_min,cal_max)
+    plt.gca().xaxis.set_major_locator(mticker.MultipleLocator(1))
+    plt.plot(gains_RGB[0],gains_RGB[2],color="blue")
+    plt.grid()
+    plt.savefig(adir+"rgbcals-bgain-"+dt_part+".png",dpi=300)
+    plt.close(fig)    
+
     # Create a calibration series RGB mean value plot
     fig=plt.figure()
     plt.title("RGB mean values")
     plt.ylabel("RGB mean value")
-    plt.xlabel("Iteration")
+    plt.xlabel(xlabel)
     plt.xlim(cal_min,cal_max)
     ymin=min([gains_RGB[3].min(),gains_RGB[4].min(),gains_RGB[5].min()])
     ymax=max([gains_RGB[3].max(),gains_RGB[4].max(),gains_RGB[5].max()])
@@ -732,7 +827,7 @@ if len(gains_RGB)>1:
     fig=plt.figure()
     plt.title("RGB mean absolute distances")
     plt.ylabel("RGB mean absolute distance value")
-    plt.xlabel("Iteration")
+    plt.xlabel(xlabel)
     plt.xlim(cal_min,cal_max)
     ymin=min([gains_RGB[6].min(),gains_RGB[7].min(),gains_RGB[8].min()])
     ymax=max([gains_RGB[6].max(),gains_RGB[7].max(),gains_RGB[8].max()])
@@ -750,7 +845,7 @@ if len(gains_RGB)>1:
     fig=plt.figure()
     plt.title("Gray mean absolute distance")
     plt.ylabel("Gray mean absolute distance value")
-    plt.xlabel("Iteration")
+    plt.xlabel(xlabel)
     plt.xlim(cal_min,cal_max)
     ymin=gains_RGB[9].min()
     ymax=gains_RGB[9].max()
