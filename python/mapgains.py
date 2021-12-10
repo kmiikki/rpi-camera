@@ -14,7 +14,7 @@ Mandatory files (output):
 rgbmap-cal-DT.txt
 rgbmap-mdist-DT.png
 
-where DT="YYYYMMDD-hhmmss"
+where DT="YYYYMMDD-hhmm"
 """
 import argparse
 import os
@@ -275,6 +275,12 @@ def analyze_data(count=0,max_count=0):
         results.append("Matrix   : "+str(len(rlist))+"x"+str(len(blist)))
         results.append("Position : "+ctext)
         results.append("Index    : "+str(mpos))
+        results.append("")
+        results.append("RGB values")
+        results.append("----------")
+        results.append("R: "+str(rmean))
+        results.append("G: "+str(gmean))
+        results.append("B: "+str(bmean))
         results.append("")
         results.append("Distance distribution")
         results.append("---------------------")
@@ -669,6 +675,7 @@ if not file_mode:
         header+="blue".rjust(chlen," ")+"  "
         header+="distance".rjust(chlen," ")
         print(header)
+        idata=[]
         with picamera.array.PiRGBArray(camera) as output:            
             for red in rlist:
                 rl=[]
@@ -699,6 +706,7 @@ if not file_mode:
                     out+=format(b_avg,"."+str(rgb_decimals)+"f").rjust(chlen," ")+"  "
                     out+=format(dist,"."+str(rgb_decimals)+"f").rjust(chlen+1," ")
                     print(out)
+                    idata.append(out)
                     rl.append(r_avg)
                     gl.append(g_avg)
                     bl.append(b_avg)
@@ -713,6 +721,9 @@ if not file_mode:
             dt_part=ct0.strftime("%Y%m%d-%H%M")
         else:
             dt_part=ct0.strftime("%Y%m%d-%H%M%S")
+        with open(adir+"rgbcal-iteration-"+dt_part+".txt", "w") as f:
+            for row in idata:
+                f.writelines(row+"\n")
         analyze_data(cal_number+1,pklfiles)
         if (cal_number==1) and (not precision_scan):
             # Adjust step for round 2
