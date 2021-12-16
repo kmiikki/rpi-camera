@@ -6,9 +6,12 @@
 This script is a derivative from ssocr.py
 URL: https://github.com/jiweibo/SSOCR, 19.8.2021
 License: GPLv3
+
+Ex: -n 3 -p 1 -b -i
 """
 
 from decimal import *
+import copy
 import csv
 import os
 #import datetime
@@ -20,14 +23,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 from pathlib import Path
+from scipy.signal import find_peaks
 from rpi.roi import *
 from rpi.inputs2 import *
+
+
+def yc(x1,y1,x2,y2,xc):
+    k=(y2-y1)/(x2-x1)
+    return k*(xc-x1)+y1
 
 ESC=27
 SPACE=32
 O=79
 R=82
 T=84
+
+peak_threshold=1.7 # Smaller value => smoother curve and more missing points
+d=[]
+uniform=[]
+uniform2=[]
+missing=[]
 
 def display_roi_status():
     if roi_dir!="":
@@ -412,6 +427,7 @@ def main():
     global numbers,decimals
     global in_bp, in_wp, in_gamma,isLevels
     global roi_result
+    global d,dall,uniform,uniform2,missing
     
     args = parser.parse_args()
 
@@ -800,8 +816,12 @@ def main():
                     results.append([t,value])
                 else:
                     results.append([fname,t,value])
+                d.append([i,t,value])
+                uniform.append([i,t,value])
                 print(value)
             else:
+                d.append([i,t,-1])
+                missing.append([i,t])
                 print("N/A: "+fname)
             i+=1
     
@@ -836,7 +856,8 @@ def main():
     
     if len(results)>1:
         # Create data filename
-        fname="numlog"+t0.strftime("%Y%m%d_%H%M%S")
+        dt_string=t0.strftime("%Y%m%d_%H%M%S")
+        fname="numlog-raw-"+dt_string
         header=results[0]
         data=results[1:]
         # Save the data
@@ -844,6 +865,7 @@ def main():
             writer=csv.writer(csvfile,delimiter=',',quotechar='"')
             writer.writerow(header)
             writer.writerows(data)
+
         # Create a data plot and save it
         ar=np.array(data).T
         if args.batch_ocr:
@@ -865,10 +887,133 @@ def main():
             plt.ylabel(header[cursor+1])
             plt.savefig(curdir+"/"+fname+".png", dpi=300)
         except:
-            print("Missing y data. Plot not created!")
+            print("Missing data plot not created!")
         plt.close()
         
+        # Missing data section
+        # ---------------------------------------------------------------------
+        d=np.array(d)
+        uniform=np.array(uniform)
+        missing=np.array(missing)
+        x=abs(uniform.T[2][1:]-uniform.T[2][:-1])
+
+        # Search for large differences
+        larges=-np.sort(-x)
+        remove=[]
+        for val in larges:
+            if val<peak_threshold:
+                break
+            for i in np.where(x==val):
+                for j in i:
+                    # print(i,j,j+1)
+                    index=j+1
+                    remove.append(uniform[index][0])
+            # print(round(val,10))
+        remove.sort()
+
+        # Create a new uniform2 array
+        uniform2=[]
+        missing=missing.tolist()
+        for element in uniform:
+            # print(element)
+            if element[0] in remove:
+                # print("Remove: "+str(element))
+                t=d[int(element[0])][1]
+                d[int(element[0])][2]=-1
+                missing.append([int(element[0]),t])
+                continue
+            # print("A:"+str(element))
+            uniform2.append(element)
+        uniform2=np.array(uniform2)
+        missing.sort()
+        missing=np.array(missing)
+        
+        # Find missing value ranges and interpolate y values
+        start=-1
+        nextval=-1
+        if len(missing)>0:
+            last=missing[-1][0]
+        mranges=[]
+        for row in missing:
+            v=row[0]
+            if start<0:
+                start=v-1
+                nextval=v+1
+                continue
+            if nextval==v:
+                nextval=v+1
+            else:
+                mranges.append([start,nextval])
+                start=v-1
+                nextval=v+1
+            if row[0]==last:
+                mranges.append([start,nextval])
+            # print(start,v,nextval)
+            
+        ydecimals=2
+        dall=copy.deepcopy(d)
+        dcalc=[]
+        for xrange in mranges:
+            a=int(xrange[0])
+            b=int(xrange[1])
+            x=a+1
+            while x<b:
+                x1=d[a][0]
+                y1=d[a][2]
+                x2=d[b][0]
+                y2=d[b][2]
+                y=round(yc(x1,y1,x2,y2,x),ydecimals)
+                dcalc.append([int(d[x][0]),d[x][1],y])
+                dall[x][2]=y
+                # print(x,y)
+                x+=1      
+
+        # Save the calculated data
+        fname="numlog-calc-"+dt_string
+        with open(curdir+"/"+fname+".csv","w") as f:
+            f.write("Row"+","+header[0]+","+header[1]+"\n")
+            for row in missing:
+                i=int(row[0])
+                tmp=str(i)+","+str(dall[i][1])+","+str(dall[i][2])
+                f.write(tmp+"\n")
+
+        # Create a data plot with missing data correction
+        fname="numlog-all-"+dt_string
+        ar=np.array(dall).T
+        if args.batch_ocr:
+            if decimals_batch==0:
+                xs=ar[1].astype(int)
+            else:
+                xs=ar[1].astype(float)
+        else:
+            if interval_mode and interval>0:
+                xs=ar[1].astype(int)
+            else:
+                xs=ar[1].astype(float)
+        ys=ar[2].astype(float)
+
+        # Save the data (OCR and calculated) 
+        with open(curdir+"/"+fname+".csv","w") as f:
+            f.write(header[0]+","+header[1]+"\n")
+            i=0
+            while i<len(xs):
+                tmp=str(xs[i])+","+str(ys[i])
+                f.write(tmp+"\n")
+                i+=1
+        try:
+            xs=ar[1].astype(float)
+            fig=plt.figure()
+            plt.xlim(xs[0],xs[-1])
+            plt.plot(xs,ys)
+            plt.xlabel(header[cursor+0])
+            plt.ylabel(header[cursor+1])
+            plt.savefig(curdir+"/"+fname+".png", dpi=300)
+        except:
+            print("Missing y data. Plot not created!")
+        plt.close()
+
         # Save a log file
+        fname="numlog-"+dt_string
         alist=[]
         with open(fname+".log", 'w') as f:
             f.write("Log name: "+fname+"\n\n")
