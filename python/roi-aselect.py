@@ -23,6 +23,7 @@ th_under=False
 th_over=False
 img_sel=[]
 
+cross_col=(255,0,0)
 decimals=4
 roi=[-1,-1,-1,-1]
 isROI=False
@@ -81,7 +82,32 @@ def getThresholdCoordinate(direction,mean,x,y,s):
         sy=y-sadjust
         ey=y+sadjust
         delta_x=-1
-    while True:
+
+    # Fix values outside ranges
+    if sx<0:
+        sx=0
+    elif sx>w-1:
+        sx=w-1
+    if ex<0:
+        ex=0
+    elif ex>w-1:
+        ex=w-1
+    if sy<0:
+        sy=0
+    elif sy>h-1:
+        sy=h-1
+    if ey<0:
+        ey=0
+    elif ey>h-1:
+        ey=h-1
+
+    # Fix slicing values
+    if ex<=sx:
+        ex=sx+1
+    if ey<=sy:
+        ey=sy+1
+
+    while True:    
         line=img[sy:ey,sx:ex]
         mean_line=line.mean(axis=(0,1)).mean()
         if th_under:
@@ -112,7 +138,7 @@ def getThresholdCoordinate(direction,mean,x,y,s):
         return sx       
 
 def click_event(event, x, y, flags, param):
-    global img_clone
+    global img_clone,img_clone2
     global roi,isROI
     if x<0 or x>=w:
         return
@@ -131,10 +157,20 @@ def click_event(event, x, y, flags, param):
         xsel1=getThresholdCoordinate(3,m,x,y,s)
         xsel2=getThresholdCoordinate(1,m,x,y,s)
         print("("+str(x)+","+str(y)+")")
+        
+        # Draw selection area
         blk=np.zeros(img.shape,np.uint8)
         cv2.rectangle(blk, (xsel1,ysel1), (xsel2,ysel2), neg_bgr,-1)
         img_clone=cv2.addWeighted(img,1,blk,0.25,1)
-        cv2.imshow('Select ROI',img_clone)
+        
+        # Draw selection cross
+        sadjust=int(s/2)
+        blk=np.zeros(img.shape,np.uint8)
+        cv2.rectangle(blk,(xsel1,y-sadjust),(xsel2,y+sadjust),cross_col,-1)
+        cv2.rectangle(blk,(x-sadjust,ysel1),(x+sadjust,ysel2),cross_col,-1)
+        img_clone2=cv2.addWeighted(img_clone,1,blk,0.25,1)
+        
+        cv2.imshow('Select ROI',img_clone2)
         roi=[xsel1,ysel1,xsel2,ysel2]
         isROI=True
     elif event == cv2.EVENT_RBUTTONDOWN:
@@ -145,7 +181,7 @@ def click_event(event, x, y, flags, param):
         isROI=False
 
 parser=argparse.ArgumentParser()
-parser.add_argument("-f","--file",type=Path, help="specify image name",required=True)
+parser.add_argument("-f","--file",type=Path, help="specify the image name",required=True)
 parser.add_argument('-t',type=float,help="threshold (default: "+str(th_default)+") as float ",required=False)
 parser.add_argument('-s',type=float,help="selection size s x s (default: "+str(s_default)+") as integer ",required=False)
 parser.add_argument("-u", action="store_true", help="enable under threshold",required=False)
@@ -168,7 +204,7 @@ else:
     threshold=th_default
 
 if args.s != None:
-    s=float(args.s)
+    s=int(args.s)
 else:
     s=s_default
     
@@ -194,8 +230,9 @@ path=Path(curdir)
 print(curdir)
 
 print("")
-print("1. Select ROI target with a mouse left button click")
-print("2. Press any key to accept the selection")
+print("1. Select ROI by pressing the mouse left button")
+print("2. Remove ROI by pressing the mouse right button")
+print("3. Press any key to accept the selection")
 
 img = cv2.imread(filename)
 if len(img.shape)==2:
@@ -203,6 +240,7 @@ if len(img.shape)==2:
 elif len(img.shape)==3:
     h,w,ch=img.shape
 img_clone=img.copy()
+img_clone2=img.copy()
 
 cv2.namedWindow("Select ROI", cv2.WINDOW_NORMAL)
 cv2.imshow("Select ROI",img_clone)
@@ -250,7 +288,8 @@ if isROI:
     
     # Save ROI images
     print("Saving ROI image files")
-    cv2.imwrite("roi-fov.jpg",img_clone)
+    cv2.imwrite("roi-patch.jpg",img_clone)
+    cv2.imwrite("roi-selection.jpg",img_clone2)
     cv2.imwrite("roi.jpg",img[crop_y0:crop_y1,crop_x0:crop_x1])
         
 else:
@@ -261,3 +300,4 @@ cv2.waitKey(1)
 cv2.destroyAllWindows()
 for i in range (1,5):
     cv2.waitKey(1)
+
