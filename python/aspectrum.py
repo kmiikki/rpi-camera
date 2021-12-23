@@ -103,6 +103,7 @@ print("Current directory:")
 curdir=os.getcwd()
 path=Path(curdir)
 print(curdir)
+print("")
 
 # Load rgb data from a file
 #
@@ -290,7 +291,7 @@ for i in range(basemin,basemax+1):
 results.sort(reverse=True)
 value=-1
 for line in results:
-    print(line)
+    #print(line)
     count=line[0]
     pos=line[1]
     if value<0:
@@ -346,7 +347,7 @@ for row in sp_print:
 
 wl_adj=inputValue("adjust wavelength",-10,10,0,"nm","Wavelength is out of range!",True)
 if wl_adj != 0:
-    sp[0]+=wl_adj
+    sp[0]-=wl_adj
 
 xs=sp[0]
 #xs=np.arange(wl_min,wl_max+1,1)
