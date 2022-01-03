@@ -48,7 +48,8 @@ print("")
 file=args.file
 with open(file,"rb") as file:
     content=file.read()
-vid=imageio.get_reader(io.BytesIO(content),"ffmpeg")
+#vid=imageio.get_reader(io.BytesIO(content),"ffmpeg")
+vid=imageio.get_reader(file.name,"ffmpeg")
 
 meta=vid.get_meta_data()
 fps=meta["fps"]
