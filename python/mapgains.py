@@ -14,7 +14,7 @@ Mandatory files (output):
 rgbmap-cal-DT.txt
 rgbmap-mdist-DT.png
 
-where DT="YYYYMMDD-hhmm"
+where DT="YYYYMMDD-hhmmss"
 """
 import argparse
 import os
@@ -33,7 +33,7 @@ from rpi.camerainfo import *
 from rpi.roi import *
 from rpi.inputs2 import *
 
-version=2.0
+version=2.2
 
 # Camera settings
 exposure=20000 # µs
@@ -93,12 +93,14 @@ adir=""
 red=1.0
 blue=1.0
 gains_RGB=[]
+distances_min=[]
 cal_number=0
 
 def analyze_data(count=0,max_count=0):    
     global results
     global red,blue
     global gains_RGB
+    global distances_min
     global cal_number
 
     cal_number+=1
@@ -155,6 +157,9 @@ def analyze_data(count=0,max_count=0):
     else:
         print("Index of minimum distance not found!")
         print("mmin: "+str(mmin))
+    
+    # Add the minimal distance to a list
+    distances_min.append(mmin)
     
     # Save data in pickle format
     data=np.dstack((rmap,gmap,bmap,bwmap))
@@ -256,6 +261,9 @@ def analyze_data(count=0,max_count=0):
             results.append("Capture time: "+str(ct1-ct0))
         results.append("Analyze time: "+str(at1-at0))
         results.append("")
+        if not file_mode:
+            results.append("Shutter speed: "+str(exposure)+" µs")
+            results.append("")
         results.append("Calibration")
         results.append("-----------")
         results.append("Red gain : "+str(rlist[rindex]))
@@ -866,3 +874,18 @@ if len(gains_RGB)>1:
     plt.grid()
     plt.savefig(adir+"rgbcals-graydist-"+dt_part+".png",dpi=300)
     plt.close(fig)    
+
+     # Create a minimum distances plot
+    fig=plt.figure()
+    plt.title("Minimal distance")
+    plt.ylabel("Minimal distance value")
+    plt.xlabel(xlabel)
+    plt.xlim(cal_min,cal_max)
+    ymin=min(distances_min)
+    ymax=max(distances_min)
+    plt.ylim(ymin,ymax)
+    plt.gca().xaxis.set_major_locator(mticker.MultipleLocator(1))
+    plt.plot(gains_RGB[0],distances_min,color="k") # RG: yellow
+    plt.grid()
+    plt.savefig(adir+"rgbcals-mindist-"+dt_part+".png",dpi=300)
+    plt.close(fig)
