@@ -478,7 +478,7 @@ if pictures>1:
     # Plot B/C ratios
     fig=plt.figure()
     ylabel="B/R, B/G ratios"
-    ymins=[b_r.min(),b_r.min()]
+    ymins=[b_g.min(),b_r.min()]
     ymaxs=[b_g.max(),b_r.max()]
     ymin=min(ymins)
     ymax=max(ymaxs)
