@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# (C) Kim Miikki 2022
 
 # Arguments:
 # -rgb -bw -x -y
@@ -32,6 +33,7 @@ csvFiles=True
 adir="rgb"
 xdir="rgbx"
 ydir="rgby"
+version="2.1"
 
 def option_str(option,selected,end="\n"):
     s=option+": "
@@ -91,7 +93,7 @@ else:
             analyzeChannels=True
             analyzeBW=True
         
-print("RGBXY 2.0, (c) Kim Miikki 2021")
+print("RGBXY "+version+", (c) Kim Miikki 2022")
 
 # Get current directory
 curdir=os.getcwd()
@@ -164,6 +166,9 @@ file.write("\n")
 fmt_bw="%d","%1.3f"
 fmt_rgb="%d","%1.3f","%1.3f","%1.3f"
 fmt_rgb_bw="%d","%1.3f","%1.3f","%1.3f","%1.3f"
+bw_str="BW"
+rgb_str="R,G,B"
+rgb_bw_str=rgb_str+",BW"
 
 t1=datetime.now()
 for p in sorted(path.iterdir()):
@@ -255,26 +260,33 @@ for p in sorted(path.iterdir()):
         if analyzeChannels and analyzeBW:
             xresults=np.column_stack((xs,xrgbs,xbws))
             fmt=fmt_rgb_bw
+            header_str=rgb_bw_str
         elif analyzeChannels:
             xresults=np.column_stack((xs,xrgbs))
             fmt=fmt_rgb
+            header_str=rgb_str
         else:
             xresults=np.column_stack((xs,xbws))
             fmt=fmt_bw
-        np.savetxt(xdir+"x-"+p.stem+".csv", xresults, fmt=fmt, delimiter=",")
-
+            header_str=bw_str
+        header_str="x,"+header_str
+        np.savetxt(xdir+"x-"+p.stem+".csv", xresults, fmt=fmt, delimiter=",", header=header_str, comments="")
 
     if analyzeYs and csvFiles:
         if analyzeChannels and analyzeBW:
             yresults=np.column_stack((ys,yrgbs,ybws))
             fmt=fmt_rgb_bw
+            header_str=rgb_bw_str
         elif analyzeChannels:
             yresults=np.column_stack((ys,yrgbs))
             fmt=fmt_rgb
+            header_str=rgb_str
         else:
             yresults=np.column_stack((ys,ybws))
             fmt=fmt_bw
-        np.savetxt(ydir+"y-"+p.stem+".csv", yresults, fmt=fmt, delimiter=",")        
+            header_str=bw_str
+        header_str="y,"+header_str
+        np.savetxt(ydir+"y-"+p.stem+".csv", yresults, fmt=fmt, delimiter=",", header=header_str, comments="")
         
 t2=datetime.now()
 
