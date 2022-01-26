@@ -257,6 +257,8 @@ for p in sorted(path.iterdir()):
         plt.close(fig)
     
     if analyzeXs and csvFiles:
+        # BGR to RGB
+        xrgbs[:,[0,2]]=xrgbs[:,[2,0]]
         if analyzeChannels and analyzeBW:
             xresults=np.column_stack((xs,xrgbs,xbws))
             fmt=fmt_rgb_bw
@@ -273,6 +275,8 @@ for p in sorted(path.iterdir()):
         np.savetxt(xdir+"x-"+p.stem+".csv", xresults, fmt=fmt, delimiter=",", header=header_str, comments="")
 
     if analyzeYs and csvFiles:
+        # BGR to RGB
+        yrgbs[:,[0,2]]=yrgbs[:,[2,0]]
         if analyzeChannels and analyzeBW:
             yresults=np.column_stack((ys,yrgbs,ybws))
             fmt=fmt_rgb_bw
