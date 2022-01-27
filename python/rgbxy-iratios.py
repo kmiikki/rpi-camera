@@ -61,7 +61,6 @@ outname="rgbratios.csv"
 parser=argparse.ArgumentParser()
 parser.add_argument("RGB")
 parser.add_argument('-cy',type=float,help="clip upper y value as float",required=False)
-parser.add_argument("-u", nargs="*", type=str,help="x unit string",required=False)
 parser.add_argument('-w',type=float,help="line width "+str(linew_min)+"-"+str(linew_max),required=False)
 parser.add_argument("-n", action="store_true", help="Do not draw grids")
 parser.add_argument("-y", action="store_true", help="auto scale y-axis")
