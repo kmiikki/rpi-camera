@@ -98,15 +98,13 @@ if args.b:
     testB=True
     argdict["b"]=True
 
-if not True in [testR,testG,testB]:
-    print("Default line color set to RED" )
-    print("")
-    testR=True
-    argdict["r"]=True
-
 if args.dec:
     decreaseNonTestColors=True
     argdict["dec"]=True
+
+if (not decreaseNonTestColors) and (not True in [testR,testG,testB]):
+    print("No increasing or decreasing colors selected." )
+    print("")
 
 if args.left:
     isGradientLeft=True
@@ -322,6 +320,12 @@ while (cursor<w):
     print(str(lines).rjust(4)+": "+str(x0)+"-"+str(x1-1))
     linespos.append([x0,x1-1])
     cursor+=space
+
+while cursor<w:
+    rdiff.append(0)
+    gdiff.append(0)
+    bdiff.append(0)
+    cursor+=1
 
 print("")
 print("Lines created: "+str(lines))
