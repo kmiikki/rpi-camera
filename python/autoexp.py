@@ -21,7 +21,7 @@ from rpi.roi import *
 
 np.set_printoptions(suppress=True)
 
-res=[[320,240],[640,480],[800,600],[1024,768]]
+res=[[320,240],[640,480],[800,600],[1024,768],[1280,1024]]
 
 # Camera settings
 exposure=20000 # µs
@@ -76,8 +76,8 @@ if args.m!=None:
         sys.exit(0)
     if mode<0:
         mode=0
-    elif mode>len(res):
-        mode=len(res)
+    elif mode>=len(res):
+        mode=len(res)-1
 
 if args.t!=None:
     try:
@@ -162,8 +162,6 @@ camera=PiCamera(resolution=(width,height))
 camera.iso=iso
 if previewImage:
     camera.start_preview(fullscreen=False,window=pip)
-# Wait for the automatic gain control to settle
-sleep(2)
 
 # Now fix the values
 camera.exposure_mode=exp_mode
@@ -172,6 +170,9 @@ camera.shutter_speed=int(exposure)
 camera.zoom=zoom
 camera.awb_gains=(red,blue)
 camera.framerate = 0.005
+
+# Wait for the automatic gain control to settle
+sleep(2)
 
 a=min_ss
 b=exposure
