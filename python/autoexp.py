@@ -300,6 +300,20 @@ colors=('r','g','b')
 print('')
 log.append('')
 if ss<=exp_max:
+    print('Capture mode : '+str(mode))
+    print('Resolution   : '+str(res[mode][0])+'x'+str(res[mode][1]))
+    if roi_result:
+        print('ROI          : Enabled')
+        print('  X0         : '+str(roi_x0))
+        print('  Y0         : '+str(roi_y0))
+        print('  W          : '+str(roi_w))
+        print('  H          : '+str(roi_h))
+    print('')
+    print('ISO          : '+str(iso))
+    print('Auto WB      : '+str(awb_mode))
+    if awb_mode=='off':
+        print('awbgains     : '+awbg)
+    print('')
     print('Shutter speed: '+str(round(ss/1000,1))+' ms')
     print('Shutter speed: '+str(ss)+' µs')
     print('Threshold    : '+str(thres))
@@ -315,7 +329,21 @@ if ss<=exp_max:
         out+=str(round(ch_means[i],1)).rjust(7)
         print(out)
         i+=1
-    # Append resuklts to log
+    # Append results to log
+    log.append('Capture mode : '+str(mode))
+    log.append('Resolution   : '+str(res[mode][0])+'x'+str(res[mode][1]))
+    if roi_result:
+        log.append('ROI          : Enabled')
+        log.append('  X0         : '+str(roi_x0))
+        log.append('  Y0         : '+str(roi_y0))
+        log.append('  W          : '+str(roi_w))
+        log.append('  H          : '+str(roi_h))    
+    log.append('')
+    log.append('ISO          : '+str(iso))
+    log.append('Auto WB      : '+str(awb_mode))
+    if awb_mode=='off':
+        log.append('awbgains     : '+awbg)
+    log.append('')
     log.append('Shutter speed: '+str(round(ss/1000,1))+' ms')
     log.append('Shutter speed: '+str(ss)+' µs')
     log.append('Threshold    : '+str(thres))
