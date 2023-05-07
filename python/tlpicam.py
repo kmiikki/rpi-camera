@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Mar  2 11:14:15 2021
+Relay feature added: 17.2.2023
 
 @author: Kim Miikki
 """
@@ -12,11 +13,27 @@ from time import sleep
 from picamera import PiCamera
 from rpi.inputs2 import *
 from rpi.camerainfo import *
+import RPi.GPIO as GPIO
+
+# Relay options
+channel=26
+shutdown_threshold=300 # default 5 min = 300 s
+fast_turn_on=1 # seconds
+relay_time=30  # relay is 30 s on
 
 pip=(0,0,640,480)
 dropfile="__drop.jpg"
 logfile="tlpicam.log"
 ext=".jpg"
+
+isRelay=False
+
+def relay_on():
+    GPIO.output(channel,True)
+
+def relay_off():
+    GPIO.output(channel,False)
+
 
 def swap(a,b):
     return b,a
@@ -52,7 +69,7 @@ def time_and_unit(minimum,maximum):
         t2=round(t2,1)
     return t1,t2,unit
 
-print("PiCamera based time-lapse program ver. 1.0")
+print("PiCamera based time-lapse program ver. 1.1")
 print("")
 
 time_and_unit(60,60)
@@ -148,6 +165,14 @@ print("Time-lapse maximum duration: "+t_str)
 print("")
 
 previewImage=inputYesNo("Preview","Preview image",False)
+isRelay=inputYesNo("Relay","Enable relay",False)
+if isRelay:
+    # Use GPIO numbers not pin numbers
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(channel, GPIO.OUT)
+    relay_on()
+    
 startTL=inputYesNo("Time-lapse","Start time-lapse now",True)
 
 if startTL:
@@ -189,6 +214,7 @@ if startTL:
     print("Capturing time-lapse images:")
 
     # Discard the first image to stabilize the capture stream
+    print("Stabilizing the camera")
     camera.capture(dropfile)
     os.remove(dropfile)
     sleep(5)    
@@ -242,10 +268,31 @@ if startTL:
                 lags.append([i,round(abs(delay),3)])
             else:
                 print()
+            
             if i>=max_count:
                 break
-            if delay>0:
-                sleep(delay)
+            
+            if (not isRelay) or (interval_s<shutdown_threshold):
+                if delay>0:
+                    sleep(delay)
+                continue
+            
+            # Relay section
+            off_time=delay-relay_time
+            on_time=relay_time
+
+            if off_time>0:
+                relay_off()
+                sleep(off_time)
+            else:
+                on_time+=off_time
+            
+            relay_on()
+            if on_time<fast_turn_on:
+                sleep(1)
+            else:
+                sleep(on_time)
+            
     except KeyboardInterrupt: # Press Ctrl+C to interrupt
         print("\nTime-lapse shooting exited.")
     else:
@@ -278,3 +325,6 @@ if startTL:
     camera.close()
 else:
     print("Time-lapse canceled.")
+
+if isRelay:
+    relay_off()
