@@ -26,6 +26,8 @@ csvname='pip.csv'
 pipname='pip'
 outdir='img'
 
+pip_start='rgbxy_'
+
 # Supported image formats:
 exts=['.png','.jpg']
 primary='.png'
@@ -141,7 +143,7 @@ for frame in frames:
     if isOk:
         # Add pips on the frame
         for d in dirs:
-            fstem=d+'/'+nums[n]
+            fstem=d+'/'+pip_start+nums[n]
             print(d+':',end='')
             file1=fstem+primary
             file2=fstem+secondary
@@ -154,7 +156,7 @@ for frame in frames:
                 if not isPIP and os.path.isfile(f):
                     try:
                         pip=cv2.imread(f)
-                        im_height,im_width,im_ch=img.shape
+                        pip_height, pip_width, im_ch = pip.shape
                         idx=j
                         isPIP=True
                         print(str(j),end='')
@@ -166,31 +168,25 @@ for frame in frames:
                 canvas = img.copy()
                 
                 # Get (x0,y0) and alpha for the pip
-                x0,y0,alpha=pipxy[idx][1:]
+                x0,y0,alpha=pipxy[0][1:]
                 alpha=float(alpha)
                 
-                # Add the image to canvas
-                x1 = x0+im_width
-                y1 = y0+im_height
-                xclip = 0
-                yclip = 0
-                if x1 >= width:
-                    x1 = width
-                    xclip = x0+im_width-width
-                if y1 >= height:
-                    y1 = height
-                    yclip = y0+im_height-height
-                if xclip > 0 and yclip > 0:
-                    canvas[y0:y1, x0:x1] = img[:-yclip, :-xclip]
-                elif xclip > 0:
-                    canvas[y0:y1, x0:x1] = img[:, :-xclip]
-                elif yclip > 0:
-                    canvas[y0:y1, x0:x1] = img[:-yclip, :]
-                else:
-                    canvas[y0:y1, x0:x1] = img
-                    
+                # Define ROI coordinates
+                roi_x0=x0
+                roi_y0=y0
+                if roi_x0<0:
+                    roi_x0=0
+                if roi_y0<0:
+                    roi_y0=0
+                roi_x1=min(width,roi_x0+pip_width)
+                roi_y1=min(height,roi_y0+pip_height)
+                
+                # Replace the ROI area to the PIP image
+                img[roi_y0:roi_y1,roi_x0:roi_x1]=pip
+                
+   
                 # Add the image to the frame using the mask
-                img = cv2.addWeighted(canvas, alpha, img, 1-alpha, 0)
+                img = cv2.addWeighted(img, alpha, canvas, 1-alpha, 0)
             else:
                 print('-',end='')
             print(' ',end='')
