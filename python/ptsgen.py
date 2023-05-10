@@ -98,7 +98,7 @@ def last_number_pos(s):
 
 parser=argparse.ArgumentParser()
 parser.add_argument('-name', type=str, help='project name (default=video)',required=False)
-parser.add_argument('-ext',type=str,help='specify extension (deafult=txt)',required=False)
+parser.add_argument('-ext',type=str,help='specify extension (default=txt)',required=False)
 parser.add_argument('-z',action='store_true',help='start time: 0',required=False)
 parser.add_argument('-f',action='store_true',help='export filenames',required=False)
 parser.add_argument('-two',action='store_true',help='export two columns',required=False)
@@ -110,7 +110,7 @@ if args.name != None:
         pts_name=stem+'.pts'
 
 if args.ext != None:
-    tmp=args.name
+    tmp=args.ext
     if tmp[0]!='.':
         tmp='.'+tmp
     ext=tmp
