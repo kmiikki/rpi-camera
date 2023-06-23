@@ -13,8 +13,6 @@ import os
 import pandas as pd
 import sys
 from scipy.optimize import minimize
-from scipy.stats import norm
-from scipy.stats import t, chi2
 import scipy.stats as st
 from datetime import datetime
 from time import sleep
@@ -65,8 +63,6 @@ csv_files=[]
 in_row=0
 startpass_filter='awbgains-trials'
 isAnalysis=False
-proportion=0.99
-
 
 class Log:
     def __init__(self, filename):
@@ -88,23 +84,7 @@ class Log:
     def clear_log(self):
         self.lines=[]
 
-def calculate_tolerance_interval(data, p, proportion):
-    alpha = 1-p
-    n = len(data)
-    mean = np.mean(data)
-    s = np.std(data, ddof=1)  # Using Bessel's correction for sample standard deviation
-    ny = n-1
-    z_critical=norm.ppf((1+p)/2)
-    chi_2 = chi2.ppf(1-alpha,ny)
-    k2=z_critical*np.sqrt( ny*(1+1/n) / chi_2)
-    
-    # Calculate the tolerance interval
-    lower_bound = mean - k2*s
-    upper_bound = mean + k2*s
-
-    return lower_bound, upper_bound
-
-print('Optimal AWB - (C) Kim Miikki 2023')
+print('Optimal AWB MSE - (C) Kim Miikki 2023')
 print('')
 
 parser=argparse.ArgumentParser()
@@ -180,8 +160,10 @@ def parse_csv(filename):
     result=False
     # Template 1: calibration, rgain(0), bgain(0), rgain_opt, bgain_opt, distance, evaluations, position, time (s)
     # Template 1: columns: 9
-    # Template 2: Iteration, rgain, bgain, R mean, G mean, B mean, ABS(RG), ABS(RB), ABS(GR), mdist
-    # Template 2 columns: 10
+    # Template 2a: Iteration, rgain, bgain, R mean, G mean, B mean, ABS(RG), ABS(RB), ABS(GR), mdist
+    # Template 2a: columns: 10
+    # Template 2b: calibration, rgain(0), bgain(0), rgain_opt, bgain_opt, mse, distance, evaluations, position, time (s)
+    # Template 2b: columns: 10
     # Template 3: calibration,rgain,bgain
     
     try:
@@ -218,14 +200,32 @@ def parse_csv(filename):
                 pass
     # Template 2
     elif c==10:
-        keys=['Iteration', 'rgain', 'bgain', 'R mean', 'G mean', 'B mean', 'ABS(RG)', 'ABS(RB)', 'ABS(GB)', 'mdist']
+        type=0
+        keys=['Iteration', 'rgain', 'bgain', 'R mean', 'G mean', 'B mean', 'ABS(RG)', 'ABS(RB)', 'ABS(GB)', 'mdist']        
         for key in keys:
             if key not in df.keys():
-                print(key)
-                print(df.keys())
+                #print(key)
+                #print(df.keys())
                 required_keys=False
                 break
         if required_keys:
+            type=1
+        else:
+            required_keys=True
+        if type==0:
+            keys=['calibration', 'rgain(0)', 'bgain(0)','rgain_opt','bgain_opt','MSE','distance','evaluations','position','time (s)']
+            for key in keys:
+                if key not in df.keys():
+                    #print(key)
+                    #print(df.keys())
+                    required_keys=False
+                    break
+            if required_keys:
+                type=2
+            else:
+                required_keys=True
+
+        if type==1:
             try:
                 # Read the first calibration row
                 lst=df.iloc[0].to_list()
@@ -251,16 +251,31 @@ def parse_csv(filename):
                 distance=(abs(r-g)+abs(r-b)+abs(g-b))/3
                 
                 # Fill the rest of fields with 0
+                mse=0
                 evaluations=0
                 position=0
                 t=0
                 
-                row=[cal_number,rgain0,bgain0,rgain_opt,bgain_opt,distance,evaluations,position,t]                
+                row=[cal_number,rgain0,bgain0,rgain_opt,bgain_opt,mse,distance,evaluations,position,t]                
                 series.append(row)
                 # i+=1
                 result=True
             except:
                 pass
+
+        elif type==2:
+            try:
+                i=0
+                while i<len(df):
+                    lst=df.iloc[i].to_list()
+                    in_row+=1
+                    lst[0]=in_row
+                    series.append(lst)
+                    i+=1
+                result=True
+            except:
+                pass
+
     elif c==3:
         keys=['calibration','rgain','bgain']
         for key in keys:
@@ -280,12 +295,13 @@ def parse_csv(filename):
                     bgain_opt=lst[2]
                     
                     # Fill the rest of fields with 0
+                    mse=0
                     distance=0
                     evaluations=0
                     position=0
                     t=0
                     
-                    row=[cal_number,rgain0,bgain0,rgain_opt,bgain_opt,distance,evaluations,position,t]                
+                    row=[cal_number,rgain0,bgain0,rgain_opt,bgain_opt,mse,distance,evaluations,position,t]                
                     series.append(row)
                     i+=1
                 result=True
@@ -332,25 +348,46 @@ if not isAnalysis:
         global count
         global rgains
         global bgains
+        global dists
+        global mses
         
         rgain, bgain = x
         # capture an image
         camera.awb_gains=(rgain,bgain)
         camera.capture(output,"rgb")
-        rgb_means=np.array(output.array).mean(axis=(0,1))
+        image=output.array
+        
+        # Calculate the color distributions
+        hist_r = cv2.calcHist([image], [0], None, [256], [0, 256])
+        hist_g = cv2.calcHist([image], [1], None, [256], [0, 256])
+        hist_b = cv2.calcHist([image], [2], None, [256], [0, 256])
+    
+        # Convert the histograms to numpy arrays
+        r_counts = np.squeeze(np.asarray(hist_r, dtype=np.float32))
+        g_counts = np.squeeze(np.asarray(hist_g, dtype=np.float32))
+        b_counts = np.squeeze(np.asarray(hist_b, dtype=np.float32))
+    
+        # Calculate the Mean Squared Error (MSE)
+        mse = ((r_counts - g_counts) ** 2 + (r_counts - b_counts) ** 2 + (g_counts - b_counts) ** 2) / 3
+        mse = mse.mean()
         output.truncate(0)
+        
+        rgb_means=np.array(output.array).mean(axis=(0,1))
         r=rgb_means[0]
         g=rgb_means[1]
         b=rgb_means[2]
-        distance=(abs(r-g)+abs(r-b)+abs(g-b))/3
+        distance=(abs(r-g)+abs(r-b)+abs(g-b))/3       
+        
         count+=1
-        # print(count,distance)
+
         if count % 5 == 0:
             print(".",end="")
         rgains.append(rgain)
         bgains.append(bgain)
         dists.append(distance)
-        return distance
+        mses.append(mse)
+        #print(distance,mse)
+        return mse
     
     # ct0=datetime.now()
     # dt_part_all=ct0.strftime("%Y%m%d-%H%M%S")
@@ -358,6 +395,7 @@ if not isAnalysis:
     for trial in range(1,trials+1):
         count=0
         dists=[]
+        mses=[]
         rgains=[]
         bgains=[]
     
@@ -391,7 +429,6 @@ if not isAnalysis:
         
             # Initial guess for rgain and bgain values
             initial_guess=[awb_red,awb_blue]
-            #initial_guess=[r_initial,b_initial]
         
             # Perform optimization using Nelder-Mead algorithm
             result=minimize(objective_function,initial_guess,bounds=bounds,method='Nelder-Mead',options={'maxiter':iterations})
@@ -410,12 +447,15 @@ if not isAnalysis:
         ct2=datetime.now()
         
         # Find the index of color minimum distance
+        mses=np.array(mses)
         dists=np.array(dists)
-        pos=np.argmin(dists)
+        pos=np.argmin(mses)
         evaluations=np.arange(1,count+1)
         rgains=np.array(rgains)
         bgains=np.array(bgains)
         
+        mse=mses[pos]
+        disp_mse=int(round(mse,0))
         disp_dist=round(dists[pos],rgb_decimals)
         dist=round(dists[pos],decimals)
         
@@ -427,6 +467,7 @@ if not isAnalysis:
         print('\n')
         print('Optimal rgain: '+str(disp_rgain))
         print('Optimal bgain: '+str(disp_bgain))
+        print('Optimal MSE: '+str(disp_mse))
         print('Mean distance: '+str(disp_dist))
         print('')
         print('Time elapsed: '+str(ct2-ct1))
@@ -434,13 +475,15 @@ if not isAnalysis:
             print('')
         
         # Save calibration series data to a csv file
-        m=np.array((evaluations,rgains,bgains,dists)).T
+        m=np.array((evaluations,rgains,bgains,mses,dists)).T
         with open(curdir+'awbgains-data-'+dt_part+'.csv', 'w') as f:
             writer = csv.writer(f,delimiter=',')
-            header=['evaluation','rgain','bgain','mdist']
+            header=['evaluation','rgain','bgain','MSE','mdist']
             writer.writerow(header)
             for row in m:
-                writer.writerow([int(row[0]),row[1],row[2],row[3]])
+                #print(row)
+                #print(row.shape)
+                writer.writerow([int(row[0]),row[1],row[2],row[3],row[4]])
         
         xlabel='Evaluation'
         xs=np.arange(1,count+1)
@@ -448,17 +491,19 @@ if not isAnalysis:
         if isFigs:
             # Create a calibration series for ABS(gray)
             fig=plt.figure()
-            plt.title('Gray mean absolute distance')
-            plt.ylabel('Gray mean absolute distance value')
+            plt.title('MSE of R,G,B distributions')
+            plt.ylabel('Mean squared error')
             plt.xlabel(xlabel)
             plt.xlim(1,count)
-            ymin=0
-            ymax=np.max(dists)
+            plt.yscale('log')
+            ymin=np.min(mses)
+            ymax=np.max(mses)
             plt.ylim(ymin,ymax)
-            plt.plot(xs,dists,color="k")
-            plt.plot(pos+1,dist,'ro')
+            plt.plot(xs,mses,color="k")
+            plt.plot(pos+1,ymin,'ro')
+
             plt.grid()
-            plt.savefig(curdir+'awbgains-graydist-'+dt_part+'.png',dpi=300)
+            plt.savefig(curdir+'awbgains-mse-'+dt_part+'.png',dpi=300)
             plt.close(fig)
             
             fig=plt.figure()
@@ -481,11 +526,11 @@ if not isAnalysis:
             plt.savefig(curdir+'awbgains-bgain'+dt_part+'.png',dpi=300)
             plt.close(fig) 
     
-        # calibration, rgain(0), bgain(0), rgain_opt, bgain_opt, distance, evaluations, position, time
+        # calibration, rgain(0), bgain(0), rgain_opt, bgain_opt, MSE, distance, evaluations, position, time
         series.append([trial,
                        rgains[0],bgains[0],
                        optimal_rgain,optimal_bgain,
-                       dist, count, pos+1, (ct2-ct1).total_seconds()])
+                       mse, dist, count, pos+1, (ct2-ct1).total_seconds()])
 
 # sys.exit(0)
     
@@ -496,7 +541,9 @@ total_time=str(ct3-ct0)
 # Calculate CI for rgain and bgain mean values
 r_gains=series[3]
 b_gains=series[4]
-opt_dists=series[5]
+mses=series[5]
+opt_mse=int(round(np.min(mses),0))
+opt_dists=series[6]
 N=trials
 
 method=''
@@ -512,10 +559,10 @@ if N>1 and N<=30:
 elif N>30:
     # Use normal distribution
     method='Normal distribution'
-    ci_rgain=st.norm.interval(p,
+    ci_rgain=st.norm.interval(alpha=p,
               loc=np.mean(r_gains),
               scale=st.sem(r_gains))
-    ci_bgain=st.norm.interval(p,
+    ci_bgain=st.norm.interval(alpha=p,
               loc=np.mean(b_gains),
               scale=st.sem(b_gains))
 
@@ -539,7 +586,7 @@ log.add('')
 if N==1:
     log.add('Optimal rgain: '+str(optimal_rgain))
     log.add('Optimal bgain: '+str(optimal_bgain))
-    log.add('Mean distance: '+str(dist))
+    log.add('Minimum MSE  : '+str(opt_mse))
     log.add('')
     log.add('Time elapsed: '+str(ct2-ct1))
 elif N>1:
@@ -570,6 +617,9 @@ elif N>1:
     log.add('p     : '+str(p))
     log.add('Method: '+method)
     log.add('')
+    
+    log.add('Mean squared error:')
+    log.add('MSE   : '+str(opt_mse))
     
     log.add('Optimal distances:')
     log.add('Min   : '+str(fopt_dist_min))
@@ -619,7 +669,7 @@ if N>1:
     with open(curdir+'awbgains-trials-'+dt_part_all+'.csv', 'w') as f:
         writer = csv.writer(f,delimiter=',')
         header=['calibration', 'rgain(0)', 'bgain(0)', 'rgain_opt', 'bgain_opt',
-                'distance', 'evaluations', 'position', 'time (s)']
+                'MSE', 'distance', 'evaluations', 'position', 'time (s)']
         writer.writerow(header)
         for row in series.T:
             tmp=[]
@@ -628,10 +678,11 @@ if N>1:
             tmp.append(row[2])         # bgain(0)
             tmp.append(row[3])         # rgain_opt
             tmp.append(row[4])         # bgain_opt
-            tmp.append(row[5])         # distance
-            tmp.append(int(row[6]))    # evaluations
-            tmp.append(int(row[7]))    # position
-            tmp.append(row[8])         # distance
+            tmp.append(row[5])         # MSE
+            tmp.append(row[6])         # distance
+            tmp.append(int(row[7]))    # evaluations
+            tmp.append(int(row[8]))    # position
+            tmp.append(row[9])         # distance
             writer.writerow(tmp)
     
     # Generate a series rgain, bgain scatter plot with CI
@@ -732,112 +783,4 @@ if N>1:
     plt.plot(range(1,N+1),b_gains,'bo')
     plt.grid()
     plt.savefig(curdir+'awbgains-trials-bgain-'+dt_part_all+'.png',dpi=300)
-    plt.close(fig)
-
-    # Tolerance interval graphs
-    
-    # Generate a series rgain, bgain scatter plot with TI
-    fig=plt.figure()
-    ax=fig.add_subplot(111)
-    tmp='Red and blue gains with TI ('+ptext+','+str(proportion)+')'+'\n'
-    tmp+='N= '+str(N)
-    plt.title(tmp)
-    plt.ylabel('rgain')
-    plt.xlabel('bgain')
-    
-    # Calculate series limits for x and y axes
-    factor=2
-
-    xmin=np.min(b_gains)
-    xmax=np.max(b_gains)
-    ymin=np.min(r_gains)
-    ymax=np.max(r_gains)
-    xhalf=xmax-xmin
-    yhalf=ymax-ymin
-    xmin-=xhalf*factor
-    xmax+=xhalf*factor
-    ymin-=yhalf*factor
-    ymax+=yhalf*factor
-
-    plt.xlim(xmin,xmax)
-    plt.ylim(ymin,ymax)
-    
-    # Plot a series optimal gains
-    plt.plot(b_gains,r_gains,'ko')
-    
-    # Draw CI rectangle
-    xlower, xupper=calculate_tolerance_interval(b_gains,0.95,proportion)
-    ylower, yupper=calculate_tolerance_interval(r_gains,0.95,proportion)
-    rect=matplotlib.patches.Rectangle((xlower,ylower),
-                                      xupper-xlower,
-                                      yupper-ylower,
-                                      facecolor='red',
-                                      alpha=0.1)
-    ax.add_patch(rect)
-    plt.plot(np.mean(b_gains),np.mean(r_gains),marker='D',color='red')
-    
-    plt.grid()
-    plt.savefig(curdir+'awbgains-ti-trials-'+dt_part_all+'.png',dpi=300)
-    plt.close(fig)
-    
-    # Plot a series rgain TI figure
-    fig=plt.figure()
-    tmp='Red gain with two-sided TI ('+ptext+','+str(proportion)+')'+'\n'
-    tmp+='N= '+str(N)
-    plt.title(tmp)
-    plt.ylabel('rgain')
-    plt.xlabel('Calibration')
-    plt.xlim(1,N)
-    
-    ymin=np.min(r_gains)
-    ymax=np.max(r_gains)
-    xhalf=xmax-xmin
-    yhalf=ymax-ymin
-    xmin-=xhalf*factor
-    xmax+=xhalf*factor
-    ymin-=yhalf*factor
-    ymax+=yhalf*factor
-    
-    lower, upper=calculate_tolerance_interval(r_gains,0.95,proportion)
-    
-    plt.ylim(ymin,ymax)
-    plt.axhline(lower,color='k',linestyle=':')
-    plt.axhline(rmean,color='k')
-    plt.axhline(upper,color='k',linestyle=':')
-    xs=generate_xlist(N)
-    plt.xticks(xs)
-    plt.plot(range(1,N+1),r_gains,'ro')
-    plt.grid()
-    plt.savefig(curdir+'awbgains-trials-ti_rgain-'+dt_part_all+'.png',dpi=300)
-    plt.close(fig)
-
-    # Plot a series bgain TI figure
-    fig=plt.figure()
-    tmp='Blue gain with two-sided TI ('+ptext+','+str(proportion)+')'+'\n'
-    tmp+='N= '+str(N)
-    plt.title(tmp)
-    plt.ylabel('bgain')
-    plt.xlabel('Calibration')
-    plt.xlim(1,N)
-    
-    ymin=np.min(b_gains)
-    ymax=np.max(b_gains)
-    xhalf=xmax-xmin
-    yhalf=ymax-ymin
-    xmin-=xhalf*factor
-    xmax+=xhalf*factor
-    ymin-=yhalf*factor
-    ymax+=yhalf*factor
-    
-    lower, upper=calculate_tolerance_interval(b_gains,0.95,proportion)
-    
-    plt.ylim(ymin,ymax)
-    plt.axhline(lower,color='k',linestyle=':')
-    plt.axhline(bmean,color='k')
-    plt.axhline(upper,color='k',linestyle=':')
-    xs=generate_xlist(N)
-    plt.xticks(xs)
-    plt.plot(range(1,N+1),b_gains,'bo')
-    plt.grid()
-    plt.savefig(curdir+'awbgains-trials-ti_bgain-'+dt_part_all+'.png',dpi=300)
     plt.close(fig)
