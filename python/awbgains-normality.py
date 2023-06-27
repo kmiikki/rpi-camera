@@ -79,8 +79,8 @@ print('')
 
 parser=argparse.ArgumentParser()
 parser.add_argument('csvfile', nargs='?', help='specify name of the csv file', default='')
-parser.add_argument('-s',action='store_true',help='create all figures',required=False)
-parser.add_argument('-nsave',action='store_true',help='create all figures',required=False)
+parser.add_argument('-s',action='store_true',help='show all figures',required=False)
+parser.add_argument('-nsave',action='store_true',help='do not create figures',required=False)
 args = parser.parse_args()
 
 filename=startpass_filter+'*.csv'
