@@ -9,7 +9,7 @@ Relay feature added: 17.2.2023
 import os
 from datetime import datetime,timedelta
 from pathlib import Path
-from time import sleep
+from time import sleep, perf_counter
 from picamera import PiCamera
 from rpi.inputs2 import *
 from rpi.camerainfo import *
@@ -69,6 +69,11 @@ def time_and_unit(minimum,maximum):
         t2=round(t2,1)
     return t1,t2,unit
 
+
+def get_sec_fractions(resolution=5) -> float:
+    t = datetime.now()
+    return round(t.timestamp() % 1, resolution)
+
 print("PiCamera based time-lapse program ver. 1.1")
 print("")
 
@@ -124,8 +129,8 @@ default_awb=True
 awb_on=inputYesNo("AWB","AWB mode on",default_awb)
 if not awb_on:
     print("")
-    awbg_red=inputValue("red gain",1.0,8.0,awbg_red_default,"","Value out of range!",False)
-    awbg_blue=inputValue("blue gain",1.0,8.0,awbg_blue_default,"","Value out of range!",False)
+    awbg_red=inputValue("red gain",0.001,8.0,awbg_red_default,"","Value out of range!",False)
+    awbg_blue=inputValue("blue gain",0.001,8.0,awbg_blue_default,"","Value out of range!",False)
 
 print("")
 jpg_mode=inputYesNo("jpg mode","Image format JPG",True)
@@ -211,7 +216,6 @@ if startTL:
     print("")
     print("Press CTRL+C to exit time-lapse shooting.")
     print("")
-    print("Capturing time-lapse images:")
 
     # Discard the first image to stabilize the capture stream
     print("Stabilizing the camera")
@@ -254,14 +258,22 @@ if startTL:
     file.close()
     
     lags=[]
+    print("Time synchronization.")
+    # Wait until a new second starts
+    while get_sec_fractions() != 0:
+        pass
+    
+    tp0 = perf_counter()
     tl_start=datetime.now()
+    print("\nCapturing time-lapse images:")
+    
     try:
-        t0=datetime.now()
         for filename in camera.capture_continuous("{counter:0"+str(digits)+"d}"+ext,quality=quality):
             i+=1
+            tp1 = perf_counter()
             t1=datetime.now()
-            capture_time=(t1-(t0+timedelta(minutes=(i-1)*interval_min))).total_seconds()
-            delay=float(interval_min*60-capture_time)
+            capture_time = (tp1-(tp0 + interval_min * (i - 1) * 60))
+            delay = float(interval_min * 60 - capture_time)
             print(str(i).zfill(digits)+"/"+str(max_count),end="")
             if delay<0:
                 print(": frame delayed "+format(round(abs(delay),3),".3f")+" s")
